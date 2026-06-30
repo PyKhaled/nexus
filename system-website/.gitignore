@@ -1,0 +1,70 @@
+# WordPress
+/wp-admin
+/wp-includes
+/wp-content/plugins/*
+!/wp-content/plugins/.gitkeep
+/wp-content/themes/*
+!/wp-content/themes/.gitkeep
+/wp-content/uploads/*
+!/wp-content/uploads/.gitkeep
+/wp-content/cache/*
+/wp-config.php
+/wp-settings.php
+/wp-signup.php
+/wp-trackback.php
+/wp-mail.php
+/wp-links-opml.php
+/wp-load.php
+/wp-login.php
+/wp-cron.php
+/wp-commentsrss2.php
+/wp-blog-header.php
+/wp-activate.php
+/index.php
+/license.txt
+/readme.html
+/wp-*.php
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.classpath
+.c9/
+*.sublime-workspace
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+build/
+
+# Database
+*.sql
+*.sqlite
+*.db
+
+# OS
+.AppleDouble
+.LSOverride
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
