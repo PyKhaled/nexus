@@ -1,15 +1,15 @@
-name: system
+name: beacon
 
 services:
-
-  # overseer:
-  #   build: /Users/ahmedkhaled/Sites/Overseer
-  #   ports:
-  #     - "8080:8080"
-  #   networks:
-  #     - system
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
+  
+  overseer:
+    build: /Users/ahmedkhaled/Sites/Overseer
+    ports:
+      - "8080:8080"
+    networks:
+      - system
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
   loadbalancer:
     build: ./system-loadbalancer
@@ -50,24 +50,24 @@ services:
 
   auth-server:
     image: authentik/server:2026.5.3
+    command: server
     container_name: auth-server
     depends_on:
       auth-db:
         condition: service_healthy
     env_file:
-    - .env
-    environment:
-      AUTHENTIK_POSTGRESQL__HOST: auth-db
-      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
-      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
-      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
-      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?secret key required}
+    - ./system-auth/.env
     shm_size: 512mb
     volumes:
-    - ./system-auth/data:/data
-    - ./system-auth/custom-templates:/templates
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./system-auth/data:/data
+      - ./system-auth/certs:/etc/ssl/certs
+      - ./system-auth/custom-templates:/templates
     networks:
       - system
+    ports:
+      - 9000:9000
+      - 9443:9443
 
   auth-worker:
     image: authentik/server:2026.5.3
@@ -77,13 +77,7 @@ services:
       auth-db:
         condition: service_healthy
     env_file:
-    - .env
-    environment:
-      AUTHENTIK_POSTGRESQL__HOST: auth-db
-      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
-      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
-      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
-      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?secret key required}
+    - ./system-auth/.env
     shm_size: 512mb
     user: root
     volumes:
@@ -130,12 +124,7 @@ services:
     networks:
       - system
 
-volumes:
-  website-db-data: {}
-  wordpress-data: {}
 
 networks:
   system:
-    name: system
-    internal: true
-
+    driver: internal
