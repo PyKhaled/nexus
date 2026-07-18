@@ -1,0 +1,27 @@
+FROM quay.io/keycloak/keycloak:24.0.1 AS builder
+
+ARG THEME_VERSION=6.1.7
+
+# Build-time-only flags: these bake into the optimized image and don't vary
+# per environment. Anything that DOES vary (KC_DB_*, KC_HOSTNAME, KC_PROXY*)
+# must stay out of the image and be supplied via env_file at runtime.
+ENV KC_HEALTH_ENABLED=true
+ENV KC_METRICS_ENABLED=true
+ENV KC_DB=postgres
+
+COPY ./providers/singular-keycloak-database-federation/dist /opt/keycloak/providers
+COPY ./theme/coursemology-keycloakify-keycloak-theme-${THEME_VERSION}.jar /opt/keycloak/providers/
+
+RUN /opt/keycloak/bin/kc.sh build
+
+FROM quay.io/keycloak/keycloak:24.0.1
+COPY --from=builder /opt/keycloak/ /opt/keycloak/
+
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
+
+# --optimized skips re-running the provider/theme build on every container
+# start (that already happened above); only valid because build ran in the
+# same image lineage. Realm data is imported at runtime via a mounted
+# volume (see realm-config/) and --import-realm, not baked in here — keeps
+# secrets out of the image and lets realm changes ship without a rebuild.
+CMD ["start", "--optimized"]
