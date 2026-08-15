@@ -1,22 +1,7 @@
 name: beacon
-
-# include:
-#   - system-auth/system-auth.compose.yml
-#   - system-website/system-website.compose.yml
-
 services:
-
-  arcane:
-    image: ghcr.io/getarcaneapp/manager:latest
-    ports:
-      - '3552:3552'
-    env_file:
-      - ./secrets.env
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-
   overseer:
-    build: /Users/ahmedkhaled/Sites/Overseer
+    image: ghcr.io/pykhaled/overseer:sha256-9cb2087c4475d4cbdfc990c6e94cea989e5f2b000a2e7173019d9bb0500675bc
     ports:
       - "8080:8080"
     volumes:

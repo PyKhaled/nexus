@@ -1,0 +1,15 @@
+name: Task
+description: Engineering task
+title: '[Task]: '
+labels:
+- task
+body:
+- type: textarea
+  attributes:
+    label: Objective
+- type: textarea
+  attributes:
+    label: Checklist
+- type: textarea
+  attributes:
+    label: Dependencies

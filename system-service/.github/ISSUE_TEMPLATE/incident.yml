@@ -1,0 +1,18 @@
+name: Incident
+description: Operational incident
+title: '[Incident]: '
+labels:
+- incident
+body:
+- type: textarea
+  attributes:
+    label: Incident Summary
+- type: textarea
+  attributes:
+    label: Impact
+- type: textarea
+  attributes:
+    label: Root Cause
+- type: textarea
+  attributes:
+    label: Mitigation

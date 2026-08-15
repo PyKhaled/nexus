@@ -1,0 +1,11 @@
+# Global Owners
+* @engineering-team
+
+# Backend
+/backend/ @backend-team
+
+# Frontend
+/frontend/ @frontend-team
+
+# Infrastructure
+/infrastructure/ @devops-team
