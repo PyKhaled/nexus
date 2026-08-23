@@ -1,26 +1,132 @@
-name: beacon
-services:
-  overseer:
-    image: ghcr.io/pykhaled/overseer:sha256-9cb2087c4475d4cbdfc990c6e94cea989e5f2b000a2e7173019d9bb0500675bc
-    ports:
-      - "8080:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+name: nexus-development
 
-  loadbalancer:
-    build: ./system-loadbalancer
-    env_file:
-      - ./system-loadbalancer/.env
+services:
+  gateway:
+    build:
+      context: ./system/system-gateway
+    image: nexus/system-gateway:local
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-app.localhost}
+      APP_UPSTREAM: ${APP_UPSTREAM:-website:80}
+      AUTH_DOMAIN: ${AUTH_DOMAIN:-auth.localhost}
+      AUTH_UPSTREAM: ${AUTH_UPSTREAM:-keycloak:8080}
+      API_DOMAIN: ${API_DOMAIN:-api.localhost}
+      API_UPSTREAM: ${API_UPSTREAM:-api:8000}
+      API_RATE_LIMIT: ${API_RATE_LIMIT:-20r/s}
+      API_RATE_BURST: ${API_RATE_BURST:-40}
+      GATEWAY_TLS_REDIRECT: ${GATEWAY_TLS_REDIRECT:-0}
     ports:
-      - "80:80"
-      - "443:443"
+      - "${GATEWAY_HTTP_PORT:-80}:80"
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      system:
+        aliases:
+          - ${APP_DOMAIN:-app.localhost}
+          - ${AUTH_DOMAIN:-auth.localhost}
+          - ${API_DOMAIN:-api.localhost}
+
+  keycloak:
+    build:
+      context: ./system/system-auth/system-auth
+      dockerfile: dockerfile
+    restart: unless-stopped
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    env_file:
+      - ./system/system-auth/system-auth/.env.example
+      - path: ./system/system-auth/system-auth/.env
+        required: false
     volumes:
-      - ./system-loadbalancer/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./system-loadbalancer/conf.d:/etc/nginx/conf.d:ro
-      - ./system-loadbalancer/ssl:/etc/nginx/ssl:ro
-      - ./system-loadbalancer/logs:/var/log/nginx
+      - ./system/system-auth/system-auth/realm-config:/opt/keycloak/data/import:ro
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nhost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"status\": \"UP\"' <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - system
+
+  keycloak-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file:
+      - ./system/system-auth/system-auth-db/.env.example
+      - path: ./system/system-auth/system-auth-db/.env
+        required: false
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - hba_file=/etc/postgresql/pg_hba.conf
+    shm_size: 256mb
+    volumes:
+      - ./system/system-auth/system-auth-db/data:/var/lib/postgresql/data
+      - ./system/system-auth/system-auth-db/config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./system/system-auth/system-auth-db/config/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - system
+
+  website:
+    image: wordpress:latest
+    restart: unless-stopped
+    depends_on:
+      website-db:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: website-db:3306
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-wordpress}
+      WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-change-me-wordpress-password}
+    volumes:
+      - wordpress-data:/var/www/html
+    networks:
+      - system
+
+  website-db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-wordpress-root-password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-wordpress}
+      MYSQL_USER: ${MYSQL_USER:-wordpress}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change-me-wordpress-password}
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - website-db-data:/var/lib/mysql
+    networks:
+      - system
 
 networks:
   system:
+    name: nexus-system
     driver: bridge
-    internal: true
+
+volumes:
+  website-db-data:
+  wordpress-data:

@@ -1,48 +1,66 @@
 .DEFAULT_GOAL := help
 
-COMPOSE = docker compose
-DC = $(COMPOSE) -f docker-compose.yml
+COMPOSE ?= docker compose
+SECRETS_ENV ?= secrets.env
+SECRETS_ENV_FLAG = $(if $(wildcard $(SECRETS_ENV)),--env-file $(SECRETS_ENV))
+DC = $(COMPOSE) $(SECRETS_ENV_FLAG) -f compose.yml
 
 .PHONY: help \
         up down restart build rebuild ps logs \
+        collect-secrets \
+        gateway gateway-up gateway-test gateway-config gateway-reload \
         auth website loadbalancer \
         auth-dbshell website-dbshell \
         clean prune
 
 help:
 	@echo ""
-	@echo "Stack"
-	@echo "====="
-	@echo " make up               Start all services"
-	@echo " make down             Stop everything"
-	@echo " make restart          Restart stack"
-	@echo " make ps               Running containers"
-	@echo " make logs             Tail all logs"
-	@echo " make build            Build images"
-	@echo " make rebuild          Build without cache"
+	@echo "Development environment"
+	@echo "======================="
+	@echo " make up               Build and start the complete environment"
+	@echo " make down             Stop the complete environment"
+	@echo " make restart          Restart the complete environment"
+	@echo " make ps               Show development containers"
+	@echo " make logs             Tail development logs"
+	@echo " make build            Build local images"
+	@echo " make rebuild          Build local images without cache"
+	@echo " make collect-secrets  Merge service .env files into secrets.env"
 	@echo ""
-	@echo "Services"
-	@echo "========"
-	@echo " make auth             Start auth-server + auth-worker"
-	@echo " make website          Start website + website-db"
-	@echo " make loadbalancer     Start loadbalancer"
+	@echo "Operations"
+	@echo "=========="
+	@echo " make gateway-test     Validate generated NGINX config"
+	@echo " make gateway-config   Print generated NGINX config"
+	@echo " make gateway-reload   Validate and reload NGINX"
+	@echo ""
+	@echo "Individual service groups"
+	@echo "========================="
+	@echo " make gateway          Start only the gateway"
+	@echo " make auth             Start Keycloak + Postgres"
+	@echo " make website          Start WordPress + MySQL"
 	@echo ""
 	@echo "Database"
 	@echo "========"
-	@echo " make auth-dbshell     psql into auth-db"
-	@echo " make website-dbshell  mysql into website-db"
+	@echo " make auth-dbshell     Open a Keycloak Postgres shell"
+	@echo " make website-dbshell  Open a WordPress MySQL shell"
 	@echo ""
 	@echo "Cleanup"
 	@echo "======="
-	@echo " make clean            Stop and remove orphans"
-	@echo " make prune            Remove all containers, images, volumes"
+	@echo " make clean            Stop and remove gateway orphans"
+	@echo " make prune            Remove all Docker images/volumes (destructive)"
 
 ##########################################
-# Stack
+# Secrets
+##########################################
+
+collect-secrets:
+	./scripts/collect-secrets.sh
+
+##########################################
+# Gateway lifecycle
 ##########################################
 
 up:
-	$(DC) up -d
+	$(DC) up -d --build
 
 down:
 	$(DC) down
@@ -61,28 +79,43 @@ ps:
 logs:
 	$(DC) logs -f
 
+gateway: gateway-up
+
+gateway-up:
+	$(DC) up -d --build gateway
+
+gateway-test:
+	$(DC) run --rm --no-deps gateway nginx -t
+
+gateway-config:
+	$(DC) run --rm --no-deps gateway nginx -T
+
+gateway-reload:
+	$(DC) exec gateway nginx -t
+	$(DC) exec gateway nginx -s reload
+
+# Backward-compatible alias for the old component name.
+loadbalancer: gateway-up
+
 ##########################################
-# Services
+# Optional backend stacks
 ##########################################
 
-auth:
-	$(DC) up auth-server auth-worker
+auth: gateway-up
+	$(DC) up -d --build keycloak keycloak-db
 
-website:
-	$(DC) up website website-db
-
-loadbalancer:
-	$(DC) up loadbalancer
+website: gateway-up
+	$(DC) up -d website website-db
 
 ##########################################
 # Database
 ##########################################
 
 auth-dbshell:
-	$(DC) exec auth-db psql -U $${PG_USER:-authentik}
+	$(DC) exec keycloak-db psql -U $${KC_DB_USERNAME:-keycloak}
 
 website-dbshell:
-	$(DC) exec website-db mysql -u $${MYSQL_USER:-wordpress} -p$${MYSQL_PASSWORD} $${MYSQL_DATABASE:-wordpress}
+	$(DC) exec website-db mysql -u $${MYSQL_USER:-wordpress} -p$${MYSQL_PASSWORD:-change-me-wordpress-password} $${MYSQL_DATABASE:-wordpress}
 
 ##########################################
 # Cleanup
