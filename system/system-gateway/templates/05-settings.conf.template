@@ -1,0 +1,3 @@
+map $host $gateway_tls_redirect {
+    default ${GATEWAY_TLS_REDIRECT};
+}

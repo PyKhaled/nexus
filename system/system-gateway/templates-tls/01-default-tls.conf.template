@@ -1,0 +1,13 @@
+server {
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    server_name _;
+
+    ssl_certificate ${TLS_CERTIFICATE};
+    ssl_certificate_key ${TLS_CERTIFICATE_KEY};
+    include /etc/nginx/snippets/tls.conf;
+
+    location / {
+        return 404;
+    }
+}

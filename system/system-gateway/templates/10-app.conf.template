@@ -1,0 +1,19 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${APP_DOMAIN};
+
+    if ($gateway_tls_redirect = 1) {
+        return 301 https://$host$request_uri;
+    }
+
+    location / {
+        set $gateway_app_upstream "${APP_UPSTREAM}";
+
+        include /etc/nginx/snippets/proxy-headers.conf;
+        include /etc/nginx/snippets/proxy-timeouts.conf;
+        include /etc/nginx/snippets/security-headers.conf;
+
+        proxy_pass http://$gateway_app_upstream;
+    }
+}

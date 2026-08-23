@@ -1,0 +1,19 @@
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name ${APP_DOMAIN};
+
+    ssl_certificate ${TLS_CERTIFICATE};
+    ssl_certificate_key ${TLS_CERTIFICATE_KEY};
+    include /etc/nginx/snippets/tls.conf;
+
+    location / {
+        set $gateway_app_upstream "${APP_UPSTREAM}";
+
+        include /etc/nginx/snippets/proxy-headers.conf;
+        include /etc/nginx/snippets/proxy-timeouts.conf;
+        include /etc/nginx/snippets/security-headers.conf;
+
+        proxy_pass http://$gateway_app_upstream;
+    }
+}

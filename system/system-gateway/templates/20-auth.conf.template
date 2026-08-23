@@ -1,0 +1,19 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${AUTH_DOMAIN};
+
+    if ($gateway_tls_redirect = 1) {
+        return 301 https://$host$request_uri;
+    }
+
+    location / {
+        set $gateway_auth_upstream "${AUTH_UPSTREAM}";
+
+        include /etc/nginx/snippets/proxy-headers.conf;
+        include /etc/nginx/snippets/proxy-timeouts.conf;
+        include /etc/nginx/snippets/security-headers.conf;
+
+        proxy_pass http://$gateway_auth_upstream;
+    }
+}
