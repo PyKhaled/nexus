@@ -1,0 +1,43 @@
+# Documentation example: standalone WordPress and MySQL stack.
+services:
+  website-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?root password required}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-wordpress}
+      MYSQL_USER: ${MYSQL_USER:-wordpress}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?wordpress password required}
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p${MYSQL_ROOT_PASSWORD} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - website-db-data:/var/lib/mysql
+    networks:
+      - system
+
+  website:
+    image: wordpress:latest
+    depends_on:
+      website-db:
+        condition: service_healthy
+    environment:
+      - WORDPRESS_DB_HOST=website-db:3306
+      - WORDPRESS_DB_NAME=${MYSQL_DATABASE:-wordpress}
+      - WORDPRESS_DB_USER=${MYSQL_USER:-wordpress}
+      - WORDPRESS_DB_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - wordpress-data:/var/www/html
+    networks:
+      - system
+
+networks:
+  system:
+    name: nexus-system
+    external: true
+
+volumes:
+  website-db-data:
+  wordpress-data:

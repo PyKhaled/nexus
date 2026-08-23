@@ -1,0 +1,33 @@
+# Documentation example: optional OIDC API protection for local development.
+services:
+  gateway:
+    environment:
+      AUTH_REQUEST_UPSTREAM: ${AUTH_REQUEST_UPSTREAM:-oauth2-proxy:4180}
+    volumes:
+      - ./system/system-gateway/templates-auth/oauth2-api.inc.template:/etc/nginx/templates/oauth2-api.inc.template:ro
+      - ./system/system-gateway/templates-auth/30-api.conf.template:/etc/nginx/templates/30-api.conf.template:ro
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.3
+    restart: unless-stopped
+    environment:
+      OAUTH2_PROXY_PROVIDER: keycloak-oidc
+      OAUTH2_PROXY_CLIENT_ID: ${OIDC_CLIENT_ID:-nexus-api}
+      OAUTH2_PROXY_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-change-me-oidc-client-secret}
+      OAUTH2_PROXY_COOKIE_SECRET: ${OIDC_COOKIE_SECRET:-MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+      OAUTH2_PROXY_OIDC_ISSUER_URL: ${OIDC_ISSUER_URL:-http://auth.localhost/realms/nexus}
+      OAUTH2_PROXY_REDIRECT_URL: ${OIDC_REDIRECT_URL:-http://api.localhost/oauth2/callback}
+      OAUTH2_PROXY_EMAIL_DOMAINS: ${OIDC_EMAIL_DOMAINS:-*}
+      OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
+      OAUTH2_PROXY_REVERSE_PROXY: "true"
+      OAUTH2_PROXY_SET_XAUTHREQUEST: "true"
+      OAUTH2_PROXY_SET_AUTHORIZATION_HEADER: "true"
+      OAUTH2_PROXY_PASS_ACCESS_TOKEN: "true"
+      OAUTH2_PROXY_SKIP_PROVIDER_BUTTON: "true"
+      OAUTH2_PROXY_COOKIE_SECURE: ${OIDC_COOKIE_SECURE:-false}
+      OAUTH2_PROXY_COOKIE_SAMESITE: lax
+      OAUTH2_PROXY_UPSTREAMS: static://202
+    expose:
+      - "4180"
+    networks:
+      - system

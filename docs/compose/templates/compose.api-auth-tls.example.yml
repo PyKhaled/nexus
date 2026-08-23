@@ -1,0 +1,5 @@
+# Documentation example: TLS route patch used with the TLS and API-auth examples.
+services:
+  gateway:
+    volumes:
+      - ./system/system-gateway/templates-auth/31-api-tls.conf.template:/etc/nginx/templates/31-api-tls.conf.template:ro

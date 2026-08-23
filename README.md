@@ -1,76 +1,133 @@
-# System
+# Nexus
 
-A SaaS platform mono-repo composed of Docker services managed via a single `docker-compose.yml`. Each subdirectory is a git submodule with its own repository.
+Nexus is a self-hosted application stack fronted by a reusable NGINX edge
+gateway. The gateway is the only component that publishes the HTTP port; backend
+services communicate over the shared `nexus-system` Docker network.
 
-## Services
+## Architecture
 
-| Service | Image | Port |
-|---|---|---|
-| `loadbalancer` | nginx:1.29-alpine (custom build) | 80, 443 |
-| `auth-server` | authentik/server:2026.5.3 | 9000, 9443 |
-| `auth-worker` | authentik/server:2026.5.3 | — |
-| `auth-db` | postgres:16-alpine | — |
-| `website` | wordpress:latest | 8080 |
-| `website-db` | mysql:8.0 | 3306 |
-
-`system-service/` contains a reference Dockerfile showing how to extend a production image — it is not wired into the compose stack.
-
-## Setup
-
-### 1. Initialize submodules
-
-```bash
-git submodule update --init --recursive
-git submodule foreach --recursive 'git fetch origin main || true; git checkout main 2>/dev/null || git checkout -b main; git pull origin main'
+```text
+browser / API client
+        |
+        v
+Nexus System Gateway (NGINX :80)
+        |
+        +-- app.localhost  --> website:80
+        +-- auth.localhost --> keycloak:8080
+        +-- api.localhost  --> api:8000
 ```
 
-### 2. Create environment files
+The gateway can run without its upstream applications. Docker service names
+are resolved when requests arrive, so unavailable services return `502`
+without preventing the gateway from starting.
 
-**`.env`** (root — used by auth-server, auth-worker):
-```
-PG_DB=authentik
-PG_USER=authentik
-PG_PASS=<required>
-AUTHENTIK_SECRET_KEY=<required>
-COMPOSE_PORT_HTTP=9000
-COMPOSE_PORT_HTTPS=9443
-MYSQL_ROOT_PASSWORD=<required>
-MYSQL_PASSWORD=<required>
+## Components
+
+| Component | Purpose |
+| --- | --- |
+| `system/system-gateway/` | NGINX edge gateway, routes, and shared policies |
+| `system/system-website/` | Optional WordPress and MySQL stack |
+| `system/system-auth/` | Optional Keycloak and PostgreSQL stack |
+| `system/system-service/` | Reference service packaging scaffold |
+
+## Start the development environment
+
+The root `compose.yml` is the active definition for local development. Its
+defaults work without an environment file:
+
+```sh
+make up
+curl http://localhost/healthz
 ```
 
-**`system-auth-db/.env`** (used by auth-db):
-```
-PG_DB=authentik
-PG_USER=authentik
-PG_PASS=<required>
+This starts the gateway, Keycloak with PostgreSQL, and WordPress with MySQL.
+The reference `system-service` scaffold is not runnable and is therefore not
+started by Compose.
+
+Expected response:
+
+```text
+ok
 ```
 
-### 3. Start the stack
+The root Make targets load `secrets.env` automatically when it exists. Set
+`SECRETS_ENV=/path/to/another.env` to use a different root secrets file.
 
-```bash
+Generate `secrets.env` from every service-level `.env` file under `system/`:
+
+```sh
+make collect-secrets
+```
+
+The collector stops if two files define the same key, preventing one service's
+value from silently replacing another's.
+
+Then rebuild and start the environment:
+
+```sh
 make up
 ```
 
-## URLs (after `make up`)
+## Start an individual service group
 
-| Service | URL |
-|---|---|
-| WordPress | http://localhost:8080 |
-| Authentik | http://localhost:9000 |
-| Authentik (HTTPS) | https://localhost:9443 |
+The root Compose file remains the source of truth even when starting only one
+part of the environment:
 
-## Common Commands
-
-```bash
-make up / down / restart   # stack lifecycle
-make ps                    # running containers
-make logs                  # tail all logs
-make build                 # build images
-make rebuild               # build without cache
-make clean                 # down --remove-orphans
-make prune                 # remove all containers, images, volumes (destructive)
+```sh
+make website
+make auth
+make gateway
 ```
 
-## Nginx Routing
+The website and Keycloak stacks default to checked-in development placeholders.
+Create private Keycloak `.env` files and override the root `secrets.env` values
+before any shared deployment. Custom Keycloak provider and theme JARs are
+optional; place them in `system/system-auth/system-auth/providers/` or
+`theme/` when available.
 
-Virtual host configs live in `system-loadbalancer/conf.d/`. SSL certificates go in `system-loadbalancer/ssl/` and are mounted read-only into the container.
+## Local URLs
+
+| Endpoint | URL |
+| --- | --- |
+| Gateway health | `http://localhost/healthz` |
+| Website | `http://app.localhost` |
+| Authentication | `http://auth.localhost` |
+| API | `http://api.localhost` |
+
+## Gateway operations
+
+```sh
+make gateway-test      # validate generated NGINX configuration
+make gateway-config    # print the complete generated configuration
+make gateway-reload    # reload runtime-mounted config after validation
+make logs              # follow gateway logs
+```
+
+See `system/system-gateway/README.md` for configuration layout,
+troubleshooting, and instructions for adding routes.
+
+## Compose modes and templates
+
+Only `compose.yml` is active and used by the development Make targets. Optional
+TLS, OIDC API authentication, combined secure-development, and standalone stack
+definitions live under `docs/compose/templates/` as documentation examples.
+
+See `docs/compose/README.md` for the mode names, differences, example commands,
+and the additional requirements for staging or production. The examples are
+never loaded automatically.
+
+## Runbooks
+
+Operational runbooks are stored with the service or stack that owns them. See
+`docs/runbooks/README.md` for the central index and contribution conventions.
+
+## Add another routed service
+
+1. Attach the service to the Docker network named `nexus-system`.
+2. Add its domain and upstream configuration to `compose.yml`.
+3. Add a route template under `system/system-gateway/templates/`.
+4. Rebuild the gateway and run `make gateway-test`.
+
+Backends should expose only their internal application port. In normal
+operation, host port `80` belongs exclusively to the gateway. Port `443` is
+published only when intentionally applying the documented TLS example.
