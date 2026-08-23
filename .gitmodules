@@ -1,3 +1,4 @@
 # [submodule "system-service"]
-# 	path = system-service
-# 	url = git@github.com:your-org/system-service.git
+# 	path = system/system-service
+#     url = git@github.com:your-org/system-service.git
+#     branch = main

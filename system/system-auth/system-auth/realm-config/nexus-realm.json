@@ -1,0 +1,27 @@
+{
+  "realm": "nexus",
+  "enabled": true,
+  "displayName": "Nexus (development placeholder)",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "clients": [
+    {
+      "clientId": "nexus-api",
+      "name": "Nexus API Gateway",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "change-me-oidc-client-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://api.localhost/oauth2/callback",
+        "https://api.localhost/oauth2/callback"
+      ],
+      "webOrigins": [
+        "http://api.localhost",
+        "https://api.localhost"
+      ]
+    }
+  ]
+}
