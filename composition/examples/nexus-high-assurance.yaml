@@ -1,0 +1,21 @@
+apiVersion: nexus.io/composition/v1alpha1
+
+product:
+  name: nexus-secure
+  edition: community
+  description: Private-registry-only high-assurance reference selection
+
+deployment:
+  target: self-hosted
+  environment: production
+  assurance: high-assurance
+
+registry:
+  host: registry.example.com
+  namespace: nexus-secure
+  policy: private-only
+
+capabilities:
+  gateway: nginx
+  website: wordpress
+  authentication: keycloak
