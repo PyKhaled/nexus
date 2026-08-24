@@ -95,7 +95,7 @@ make gateway
 The website and Keycloak stacks default to checked-in development placeholders.
 Create private Keycloak `.env` files and override the root `secrets.env` values
 before any shared deployment. Custom Keycloak provider and theme JARs are
-optional; place them in `system/system-auth/system-auth/providers/` or
+optional; place them in `system/system-auth/providers/` or
 `theme/` when available.
 
 <!-- ## Local URLs -->
