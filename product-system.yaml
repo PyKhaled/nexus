@@ -82,6 +82,12 @@ capabilities:
     category: shared-capability
     state: partial
     implementation: kener
+    upstream:
+      name: Kener
+      version: v4.1.2
+      website: https://kener.ing
+      documentation: https://kener.ing/docs/v4/getting-started/introduction
+      source: https://github.com/rajnandan1/kener
     type: stack
     path: system/system-status
     compose_services:

@@ -4,7 +4,11 @@ Status: Partial development implementation
 
 Owner: Unassigned
 
-Implementation: Kener 4.1.2 with Redis 7.4 and SQLite
+Implementation: [Kener v4.1.2](https://kener.ing) with Redis 7.4 and SQLite
+
+Upstream: [documentation](https://kener.ing/docs/v4/getting-started/introduction),
+[quick start](https://kener.ing/docs/v4/getting-started/quick-start), and
+[source](https://github.com/rajnandan1/kener)
 
 ## Capability
 
@@ -38,7 +42,9 @@ deployment.
 
 ## Configuration and data
 
-The root `compose.yml` sets the required Kener `ORIGIN` and `REDIS_URL` values.
+The root `compose.yml` follows Kener's official v4 container contract. It sets
+the required `ORIGIN`, `REDIS_URL`, and `KENER_SECRET_KEY` values, persists
+`/app/database`, and waits for Redis health before starting Kener.
 `KENER_SECRET_KEY` defaults to an isolated-development placeholder so the local
 stack starts without a secrets file. Replace it before creating real users or
 using the deployment outside an isolated workstation.
