@@ -14,7 +14,7 @@ docker compose -f compose.yml \
 
 docker compose -f compose.yml \
   cp keycloak:/tmp/nexus-realm.json \
-  system/system-auth/system-auth/realm-config/nexus-realm.json
+  system/system-auth/realm-config/nexus-realm.json
 ```
 
 ## Before committing an export
