@@ -19,7 +19,7 @@ services:
       - system
 
   website:
-    image: wordpress:latest
+    image: wordpress:7.0.2-php8.3-apache
     depends_on:
       website-db:
         condition: service_healthy

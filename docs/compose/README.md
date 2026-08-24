@@ -7,12 +7,19 @@ environment and is the file used by every `make` target.
 Files under [`templates/`](templates/) are documentation examples. They are
 not loaded automatically and are not part of the default development workflow.
 
+Target-specific product compositions are generated from the catalogs and
+selection policies under [`composition/`](../../composition/). The manual
+overlays on this page remain useful for focused gateway experiments; they are
+not the edition, environment, deployment-target, or assurance model.
+
 ## Modes
 
 | Mode | Files | Purpose |
 | --- | --- | --- |
 | `development` | `compose.yml` | Complete local environment over HTTP |
 | `development-tls` | `compose.yml` + `compose.tls.example.yml` | Local HTTPS testing |
+| `development-api` | `compose.yml` + `compose.api.example.yml` | Add an unprotected route for an implemented API service |
+| `development-api-tls` | Root file plus TLS, API, and API-TLS examples | Add HTTP and HTTPS routes for an implemented API service |
 | `development-auth` | `compose.yml` + `compose.api-auth.example.yml` | Test OIDC protection for the API route |
 | `development-secure` | Root file plus all three gateway examples | Test HTTPS and OIDC together |
 
@@ -30,12 +37,13 @@ docker compose up -d --build
 This starts:
 
 - NGINX gateway;
-- Keycloak and its PostgreSQL database; and
-- WordPress and its MySQL database.
+- Keycloak and its PostgreSQL database;
+- WordPress and its MySQL database; and
+- Kener with its private Redis dependency and persistent SQLite data.
 
-The API upstream remains reserved as `api:8000`. `system-service` is currently
-a repository scaffold rather than a runnable Nexus API, so it is not declared
-in `compose.yml`.
+No API route or product API is declared by default. The reusable service
+scaffold lives under `templates/service/`; it is not a product capability and
+is not declared in `compose.yml`.
 
 ## Using an example overlay
 
@@ -56,6 +64,10 @@ docker compose \
   -f docs/compose/templates/compose.api-auth.example.yml \
   config
 ```
+
+The API examples configure gateway routing but do not invent a product API.
+The applied composition must also declare an `api` service or override
+`API_UPSTREAM` with another reachable implementation.
 
 For the combined secure-development mode, order matters:
 
@@ -96,6 +108,8 @@ definition must provide, at minimum:
 - resource limits, monitoring, and recovery behavior; and
 - an explicit image build and release strategy.
 
-Create environment-specific definitions in the deployment repository or
-platform that owns those concerns. Keep `compose.yml` focused on reproducible
-local development.
+Use `bin/nexus-compose` to create environment-specific packages, then publish
+the reviewed package through the deployment repository or platform that owns
+artifact promotion and runtime controls. Keep root `compose.yml` focused on
+reproducible local development until the generated development composition is
+formally adopted as authoritative.

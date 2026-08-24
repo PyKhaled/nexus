@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.local/schemas/lock.schema.json",
+  "title": "Nexus generated composition lock",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "generator", "selectionDigest", "components", "artifacts"],
+  "properties": {
+    "apiVersion": {"const": "nexus.io/composition-lock/v1alpha1"},
+    "generator": {"type": "object"},
+    "selectionDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "components": {"type": "array"},
+    "artifacts": {"type": "array"}
+  }
+}

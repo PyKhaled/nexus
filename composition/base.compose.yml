@@ -1,0 +1,8 @@
+services: {}
+
+networks:
+  system:
+    name: nexus-system
+    driver: bridge
+
+volumes: {}

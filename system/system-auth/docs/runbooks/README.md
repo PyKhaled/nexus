@@ -10,4 +10,4 @@ each new runbook from this file.
 
 ## Runbooks
 
-No operational runbooks have been added yet.
+- [Initialize a missing Keycloak database](postgres-database-initialization.md)

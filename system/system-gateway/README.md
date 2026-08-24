@@ -1,8 +1,12 @@
-# Nexus System Gateway
+# Gateway Capability
 
-NGINX edge gateway for the Nexus stack. It provides host-based routing,
-reverse proxying, runtime Docker DNS resolution, shared proxy policies, and
-API rate limiting.
+The gateway is the public edge capability for the Nexus reference system. Its
+current implementation uses NGINX for host-based routing, reverse proxying,
+runtime Docker DNS resolution, and shared request policies.
+
+The capability owns public HTTP entry points and routing policy. It does not
+own application behavior, identity data, website content, or product-domain
+authorization decisions.
 
 ## Configuration
 
@@ -10,7 +14,8 @@ API rate limiting.
 | --- | --- |
 | `nginx.conf` | Global workers, logging, Docker DNS, and includes |
 | `conf.d/` | Static default and health endpoints |
-| `templates/` | Environment-rendered application routes |
+| `templates/` | Default environment-rendered website, identity, and status routes |
+| `templates-api/` | Optional unprotected API route |
 | `snippets/` | Reusable proxy, timeout, and security policies |
 | `ssl/` | Runtime TLS certificates; never included in the image |
 
@@ -24,16 +29,17 @@ time, so the gateway can start before its upstream applications.
 | --- | --- |
 | `http://app.localhost` | `website:80` |
 | `http://auth.localhost` | `keycloak:8080` |
-| `http://api.localhost` | `api:8000` |
+| `http://status.localhost` | `status:3000` |
 | `http://localhost/healthz` | Gateway liveness |
 | `http://localhost/readyz` | Gateway configuration readiness |
 
-The API route applies a per-client rate limit. An unavailable upstream returns
-`502`, but does not prevent the gateway from starting.
+The default composition does not declare an API route because no product API
+is implemented. The optional API example mounts
+`templates-api/30-api.conf.template` and applies a per-client rate limit. Apply
+it only with a composition that declares the configured API upstream.
 
-The normal route does not require authentication. The documented API-auth
-Compose example replaces the API templates with an OAuth2 Proxy `auth_request`
-integration while leaving the application and identity routes public.
+The documented API-auth Compose example mounts an OAuth2 Proxy `auth_request`
+route while leaving the application and identity routes public.
 
 ## Run with Docker Compose
 
@@ -50,8 +56,8 @@ customize domains, upstreams, rate limits, or published ports. Compose defaults
 make this optional for local development.
 
 All routed applications must join the external Docker network named
-`nexus-system`. The `make website` and `make auth` commands start the gateway
-first and then attach their services to that network.
+`nexus-system`. The `make website`, `make auth`, and `make status` commands
+start the gateway first and then attach their services to that network.
 
 ## Build and validate
 
@@ -104,3 +110,15 @@ Keycloak OIDC. It exposes OAuth2 Proxy only inside `nexus-system`; NGINX serves
 authenticated user, email, group, and token headers to the API. See
 `docs/compose/README.md` for example composition order. Values in `.env.example`
 are functional local placeholders, not production secrets.
+
+## Replacement contract
+
+A replacement gateway implementation must preserve or deliberately migrate:
+
+- configured public domains and routes;
+- forwarding and client-address headers;
+- health and readiness endpoints;
+- security-header behavior;
+- runtime handling for unavailable upstreams;
+- optional TLS and authenticated API routes; and
+- the rule that backend services remain internal by default.

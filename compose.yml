@@ -1,9 +1,10 @@
-name: nexus-development
+name: nexus
 
 services:
   gateway:
     build:
       context: ./system/system-gateway
+      dockerfile: Dockerfile
     image: nexus/system-gateway:local
     restart: unless-stopped
     environment:
@@ -11,10 +12,8 @@ services:
       APP_UPSTREAM: ${APP_UPSTREAM:-website:80}
       AUTH_DOMAIN: ${AUTH_DOMAIN:-auth.localhost}
       AUTH_UPSTREAM: ${AUTH_UPSTREAM:-keycloak:8080}
-      API_DOMAIN: ${API_DOMAIN:-api.localhost}
-      API_UPSTREAM: ${API_UPSTREAM:-api:8000}
-      API_RATE_LIMIT: ${API_RATE_LIMIT:-20r/s}
-      API_RATE_BURST: ${API_RATE_BURST:-40}
+      STATUS_DOMAIN: ${STATUS_DOMAIN:-status.localhost}
+      STATUS_UPSTREAM: ${STATUS_UPSTREAM:-status:3000}
       GATEWAY_TLS_REDIRECT: ${GATEWAY_TLS_REDIRECT:-0}
     ports:
       - "${GATEWAY_HTTP_PORT:-80}:80"
@@ -25,7 +24,7 @@ services:
         aliases:
           - ${APP_DOMAIN:-app.localhost}
           - ${AUTH_DOMAIN:-auth.localhost}
-          - ${API_DOMAIN:-api.localhost}
+          - ${STATUS_DOMAIN:-status.localhost}
 
   keycloak:
     build:
@@ -42,7 +41,7 @@ services:
     volumes:
       - ./system/system-auth/system-auth/realm-config:/opt/keycloak/data/import:ro
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nhost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"status\": \"UP\"' <&3"]
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nhost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"status\": \"UP\"' <&3"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -88,7 +87,7 @@ services:
       - system
 
   website:
-    image: wordpress:latest
+    image: wordpress:7.0.2-php8.3-apache
     restart: unless-stopped
     depends_on:
       website-db:
@@ -100,6 +99,15 @@ services:
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-change-me-wordpress-password}
     volumes:
       - wordpress-data:/var/www/html
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          php -r '$$socket = @fsockopen("127.0.0.1", 80); if (!$$socket) { exit(1); } fclose($$socket);'
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     networks:
       - system
 
@@ -122,11 +130,63 @@ services:
     networks:
       - system
 
+  status:
+    image: ghcr.io/rajnandan1/kener:v4.1.2
+    restart: unless-stopped
+    depends_on:
+      status-redis:
+        condition: service_healthy
+    environment:
+      KENER_SECRET_KEY: ${KENER_SECRET_KEY:-change-me-kener-development-secret-at-least-32-chars}
+      ORIGIN: http://${STATUS_DOMAIN:-status.localhost}
+      REDIS_URL: redis://status-redis:6379
+      DATABASE_URL: sqlite://./database/kener.sqlite.db
+    volumes:
+      - status-data:/app/database
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://127.0.0.1:3000/healthcheck').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - system
+
+  status-redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+    volumes:
+      - status-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - system
+
 networks:
   system:
     name: nexus-system
     driver: bridge
 
 volumes:
+  status-data:
+  status-redis-data:
   website-db-data:
   wordpress-data:

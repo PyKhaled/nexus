@@ -18,47 +18,63 @@ categories can contain application and infrastructure concerns.
 
 | Type | Definition | Current examples |
 | --- | --- | --- |
-| Service | A single independently built and deployed runtime | `system-gateway`, `system-service` |
-| Stack | Multiple tightly related services with a shared lifecycle | `system-auth`, `system-website` |
-| Dependency | A supporting runtime owned by one stack | PostgreSQL for Keycloak, MySQL for WordPress |
+| Service | A single independently built and deployed runtime | `system-gateway` |
+| Stack | Multiple tightly related services with a shared lifecycle | `system-auth`, `system-website`, `system-status` |
+| Dependency | A supporting runtime owned by one stack | PostgreSQL for Keycloak, MySQL for WordPress, Redis for Kener |
+| Template | A non-deployable starting structure copied into a future owned repository | `templates/service` |
 
 ## Repository structure
 
 ```text
 nexus/
 ├── compose.yml
+├── composition/
+│   ├── catalog/
+│   ├── components/
+│   ├── editions/
+│   ├── environments/
+│   ├── targets/
+│   └── assurance/
+├── generated/
 ├── system/
 │   ├── system-gateway/
-│   ├── system-service/
 │   ├── system-auth/
 │   │   ├── system-auth/
 │   │   └── system-auth-db/
-│   └── system-website/
-│       ├── system-website/
-│       └── system-website-db/
+│   ├── system-website/
+│   │   ├── system-website/
+│   │   └── system-website-db/
+│   └── system-status/
+├── templates/
+│   └── service/
 └── docs/
     └── compose/
         └── templates/
 ```
 
-The root `compose.yml` is the only active Compose definition and the integration
-entry point for the complete development environment. All deployable units live
-under `system/`. Alternative and standalone Compose definitions are retained
-only as documented examples under `docs/compose/templates/`.
+The root `compose.yml` remains the reviewed integration entry point for the
+complete development environment. `bin/nexus-compose` can compile selections
+under `composition/` into ignored, target-specific packages under `generated/`.
+The generated development composition is tested for structural equivalence
+with the root file. All deployable units live under `system/`. Alternative and
+standalone manual definitions remain documentation examples under
+`docs/compose/templates/`.
 
 ## Location mapping
 
 | Previous location | Current location |
 | --- | --- |
 | `system-gateway/` | `system/system-gateway/` |
-| `system-service/` | `system/system-service/` |
+| `system-service/` | `templates/service/` |
 | `system-auth/` | `system/system-auth/` |
 | `system-website/` | `system/system-website/` |
+| New service-status stack | `system/system-status/` |
 
 ## Ownership rules
 
-Place every deployable unit under `system/`. Treat it as a standalone service
-when it:
+Place every deployable unit under `system/`. Keep non-deployable repository and
+component starting structures under `templates/`. Treat a deployable unit as a
+standalone service when it:
 
 - can be built and deployed independently;
 - has its own release lifecycle; and
@@ -85,6 +101,9 @@ migrations, initialization files, or other owned artifacts for it.
   `keycloak`, `postgres`, `wordpress`, and `mysql`.
 - Keep nesting shallow: category, deployable boundary, then component.
 - Keep the active development topology in the root `compose.yml`.
+- Register selectable implementations in `composition/catalog/` and keep their
+  owned generator fragments under `composition/components/`.
+- Treat generated output as a release artifact, not hand-edited source.
 - Keep alternative Compose examples under `docs/compose/templates/`; do not
   load them implicitly from development commands.
 
@@ -95,12 +114,17 @@ Operational runbooks live with the deployable boundary that owns them:
 ```text
 system/
 ├── system-gateway/docs/runbooks/README.md
-├── system-service/docs/runbooks/README.md
 ├── system-auth/docs/runbooks/
 │   └── README.md
-└── system-website/docs/runbooks/
+├── system-website/docs/runbooks/
+│   └── README.md
+└── system-status/docs/runbooks/
     └── README.md
 ```
+
+The copyable service template keeps an example runbook index under
+`templates/service/docs/runbooks/`. It is not part of the Nexus operational
+inventory until a real service adopts it.
 
 A standalone service keeps all of its runbooks in its own `docs/runbooks/`
 directory. A stack keeps runbooks for its primary service and private
@@ -117,5 +141,6 @@ new top-level service directory.
 
 The repository groups all independently deployable services and multi-service
 stacks under `system/`. Private databases and other dependencies remain
-nested under their owning stack. This keeps the repository root small while
-preserving ownership and lifecycle boundaries.
+nested under their owning stack. Non-deployable starting structures live under
+`templates/`, preventing scaffolds from being mistaken for implemented product
+capabilities.

@@ -1,0 +1,8 @@
+apiVersion: nexus.io/environment/v1alpha1
+kind: Environment
+id: production
+allowBuild: false
+allowDevelopmentDefaults: false
+requireImmutableImages: false
+requireExternalSecrets: true
+restartPolicy: unless-stopped

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.local/schemas/component.schema.json",
+  "title": "Nexus component implementation catalog entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "capability",
+    "implementation",
+    "type",
+    "fragment",
+    "dependencies",
+    "services",
+    "artifacts"
+  ],
+  "properties": {
+    "apiVersion": {"const": "nexus.io/component/v1alpha1"},
+    "kind": {"const": "ComponentImplementation"},
+    "capability": {"type": "string"},
+    "implementation": {"type": "string"},
+    "type": {"enum": ["service", "stack", "adapter", "external"]},
+    "fragment": {"type": "string"},
+    "dependencies": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "services": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+    "artifacts": {"type": "object", "minProperties": 1},
+    "configuration": {"type": "object"},
+    "secrets": {"type": "object"},
+    "security": {"type": "object"},
+    "entitlement": {"type": "string"}
+  }
+}
