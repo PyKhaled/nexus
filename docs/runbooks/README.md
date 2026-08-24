@@ -1,8 +1,7 @@
 # Runbooks
 
-Runbooks are owned by the service or stack whose operation they describe. This
-directory is the central discovery index; service-specific procedures remain
-beside their deployable boundary under `system/`.
+Runbooks are owned by the service or stack whose operation they describe. For example, `system-website` is the WordPress stack, so its runbooks live at `system/system-website/docs/runbooks/`.
+This directory is the central discovery index; service-specific procedures remain beside their deployable boundary under `system/`.
 
 ## Service runbook indexes
 
@@ -16,12 +15,8 @@ beside their deployable boundary under `system/`.
 ## Conventions
 
 - Start new procedures from [`Runbook-Template.md`](Runbook-Template.md).
-- Name each runbook after the system or event it handles, such as
-  `postgres-restore.md` or `gateway-upstream-failure.md`.
+- Name each runbook after the system or event it handles, such as `postgres-restore.md` or `gateway-upstream-failure.md`.
 - Keep stack dependencies in the owning stack's runbook directory.
-- Include prerequisites, safety warnings, verification steps, rollback steps,
-  and escalation details when applicable.
-- Use commands that are safe to copy, and identify any environment-specific
-  values explicitly.
-- Link new runbooks from the owning directory's `README.md` and from this index
-  when adding a new deployable boundary.
+- Include prerequisites, safety warnings, verification steps, rollback steps, and escalation details when applicable.
+- Use commands that are safe to copy, and identify any environment-specific values explicitly.
+- Link new runbooks from the owning directory's `README.md` and from this index when adding a new deployable boundary.

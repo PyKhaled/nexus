@@ -1,11 +1,8 @@
 # Docker Compose Modes
 
-The repository root [`compose.yml`](../../compose.yml) is the only active
-Compose definition. It is the source of truth for the local development
-environment and is the file used by every `make` target.
+The repository root [`compose.yml`](../../compose.yml) is the only active Compose definition. It is the source of truth for the local development environment and is the file used by every `make` target.
 
-Files under [`templates/`](templates/) are documentation examples. They are
-not loaded automatically and are not part of the default development workflow.
+Files under [`templates/`](templates/) are documentation examples. They are not loaded automatically and are not part of the default development workflow.
 
 ## Modes
 
@@ -30,13 +27,12 @@ docker compose up -d --build
 This starts:
 
 - NGINX gateway;
-- Keycloak and its PostgreSQL database; and
-- WordPress and its MySQL database.
-
-The API upstream remains reserved as `api:8000`. `system-service` is currently
-a repository scaffold rather than a runnable Nexus API, so it is not declared
-in `compose.yml`.
-
+- keycloak and its PostgreSQL database; and
+- wordpress website.
+<!-- 
+The API upstream remains reserved as `api:8000`. `system-service` is currently a repository scaffold rather than a runnable Nexus API, so it is not declared in `compose.yml`. 
+-->
+<!-- TODO: revice this document from this line till the end  -->
 ## Using an example overlay
 
 The examples may be inspected directly or applied explicitly. For TLS testing:
