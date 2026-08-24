@@ -4,6 +4,19 @@ Nexus is a self-hosted application stack fronted by a reusable NGINX edge
 gateway. The gateway is the only component that publishes the HTTP port; backend
 services communicate over the shared `nexus-system` Docker network.
 
+## Product-system model
+
+The repository is also being used to explore a broader, technology-neutral
+model for structuring, developing, releasing, operating, and governing
+composable software products. The proposal is deliberately separate from the
+current runtime description and remains a draft for review.
+
+Start with the
+[Nexus Product System Wiki](https://github.com/PyKhaled/Nexus/wiki) for the
+concept brief, reference architecture, draft standard, policies, templates,
+machine-readable manifest example, and adoption checklist. The wiki is
+maintained as a separate Git repository in the local `wiki/` workspace.
+
 ## Architecture
 
 ```text
