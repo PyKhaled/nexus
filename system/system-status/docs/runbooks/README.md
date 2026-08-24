@@ -3,6 +3,10 @@
 This directory owns operational procedures for Kener, its SQLite data, and its
 private Redis dependency.
 
+Use the [official Kener v4 documentation](https://kener.ing/docs/v4/getting-started/introduction)
+as the upstream product reference. Nexus-specific routing, storage, security,
+backup, and recovery decisions remain owned by this directory.
+
 ## Current local checks
 
 Start the stack and inspect health from the repository root:
