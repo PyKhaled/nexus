@@ -6,24 +6,19 @@ Issues and pull requests until they merge.
 
 ## Current architecture
 
-- [Nexus product-system profile](architecture/product-system-profile.md) —
-  current scope, boundaries, and evidence state.
-- [Service and stack organization](architecture/service-and-stack-organization.md)
-  — accepted repository layout and ownership decision.
-- [Docker Compose modes](compose/README.md) — active local composition and
-  intentionally selected examples.
+- [Nexus product-system profile](architecture/product-system-profile.md) — current scope, boundaries, and evidence state.
+- [Service and stack organization](architecture/service-and-stack-organization.md) — accepted repository layout and ownership decision.
+- [Docker Compose modes](compose/README.md) — active local composition and intentionally selected examples.
 
 ## Operations and decisions
 
 - [Runbook index](runbooks/README.md) — runbook ownership and discovery.
-- [Runbook template](runbooks/Runbook-Template.md) — repository-local procedure
-  scaffold.
+- [Runbook template](runbooks/Runbook-Template.md) — repository-local procedure scaffold.
 - [ADR template](decisions/ADR-Template.md) — architecture decision scaffold.
 
 ## Component documentation
 
-- [Component README template](templates/component-readme.md) — capability,
-  ownership, interfaces, data, configuration, lifecycle, and operations.
+- [Component README template](templates/component-readme.md) — capability, ownership, interfaces, data, configuration, lifecycle, and operations.
 
 ## Proposed work
 

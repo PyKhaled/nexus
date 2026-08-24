@@ -18,11 +18,6 @@ Reusable, technology-neutral product-system guidance is maintained separately
 in Engineering OS; this repository records only the Nexus profile, decisions,
 implementation, and evidence.
 
-Issue [#4](https://github.com/PyKhaled/Nexus/issues/4) owns the feature
-rationale, scope, risks, and acceptance gate for this branch. Draft pull request
-[#5](https://github.com/PyKhaled/Nexus/pull/5) owns implementation review and
-progress. Reusable, technology-neutral guidance is maintained in Engineering
-OS; this branch owns only the proposed Nexus implementation and its evidence.
 
 ## Architecture
 
@@ -46,9 +41,8 @@ without preventing the gateway from starting.
 | Component | Purpose |
 | --- | --- |
 | `system/system-gateway/` | NGINX edge gateway, routes, and shared policies |
-| `system/system-website/` | Optional WordPress and MySQL stack |
 | `system/system-auth/` | Optional Keycloak and PostgreSQL stack |
-| `system/system-service/` | Reference service packaging scaffold |
+| `system/system-website/` | Optional WordPress and MySQL stack |
 
 ## Start the development environment
 
@@ -70,8 +64,7 @@ Expected response:
 ok
 ```
 
-The root Make targets load `secrets.env` automatically when it exists. Set
-`SECRETS_ENV=/path/to/another.env` to use a different root secrets file.
+The root Make targets load `secrets.env` automatically when it exists.
 
 Generate `secrets.env` from every service-level `.env` file under `system/`:
 
@@ -105,14 +98,16 @@ before any shared deployment. Custom Keycloak provider and theme JARs are
 optional; place them in `system/system-auth/system-auth/providers/` or
 `theme/` when available.
 
-## Local URLs
+<!-- ## Local URLs -->
 
-| Endpoint | URL |
+<!-- check openapi.json -->
+
+<!-- | Endpoint | URL |
 | --- | --- |
 | Gateway health | `http://localhost/healthz` |
 | Website | `http://app.localhost` |
 | Authentication | `http://auth.localhost` |
-| API | `http://api.localhost` |
+| API | `http://api.localhost` | -->
 
 ## Gateway operations
 
@@ -123,8 +118,7 @@ make gateway-reload    # reload runtime-mounted config after validation
 make logs              # follow gateway logs
 ```
 
-See `system/system-gateway/README.md` for configuration layout,
-troubleshooting, and instructions for adding routes.
+See `system/system-gateway/README.md` for configuration layout, troubleshooting, and instructions for adding routes.
 
 ## Compose modes and templates
 
@@ -138,8 +132,7 @@ never loaded automatically.
 
 ## Runbooks
 
-Operational runbooks are stored with the service or stack that owns them. See
-`docs/runbooks/README.md` for the central index and contribution conventions.
+Operational runbooks are stored with the service or stack that owns them. See `docs/runbooks/README.md` for the central index and contribution conventions.
 
 ## Add another routed service
 
