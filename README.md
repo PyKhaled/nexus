@@ -18,6 +18,12 @@ Reusable, technology-neutral product-system guidance is maintained separately
 in Engineering OS; this repository records only the Nexus profile, decisions,
 implementation, and evidence.
 
+Issue [#4](https://github.com/PyKhaled/Nexus/issues/4) owns the feature
+rationale, scope, risks, and acceptance gate for this branch. Draft pull request
+[#5](https://github.com/PyKhaled/Nexus/pull/5) owns implementation review and
+progress. Reusable, technology-neutral guidance is maintained in Engineering
+OS; this branch owns only the proposed Nexus implementation and its evidence.
+
 ## Architecture
 
 ```text

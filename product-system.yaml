@@ -1,0 +1,144 @@
+model: saas-product-system/v1alpha1
+
+identity:
+  name: nexus
+  description: Reference implementation of a composable SaaS product system
+  lifecycle: experimental
+  owner: unassigned
+
+composition:
+  local_entrypoint: compose.yml
+  generator: bin/nexus-compose
+  catalog: composition/catalog
+  default_selection: composition/examples/nexus-development.yaml
+  generated_output: generated
+  project_name: nexus
+  public_entrypoint: gateway
+  network: nexus-system
+  dimensions:
+    edition:
+      - community
+      - enterprise
+      - custom
+    environment:
+      - development
+      - production
+    target:
+      - local
+      - self-hosted
+    assurance:
+      - standard
+      - hardened
+      - high-assurance
+
+capabilities:
+  - id: gateway
+    category: edge-access
+    state: partial
+    implementation: nginx
+    type: service
+    path: system/system-gateway
+    compose_services:
+      - gateway
+    public_interfaces:
+      - http://localhost/healthz
+      - http://localhost/readyz
+    replaceable: true
+    owner: unassigned
+
+  - id: website
+    category: public-experience
+    state: partial
+    implementation: wordpress
+    type: stack
+    path: system/system-website
+    compose_services:
+      - website
+      - website-db
+    private_dependencies:
+      - website-db
+    public_interfaces:
+      - http://app.localhost
+    replaceable: true
+    owner: unassigned
+
+  - id: authentication
+    category: edge-access
+    state: partial
+    implementation: keycloak
+    type: stack
+    path: system/system-auth
+    compose_services:
+      - keycloak
+      - keycloak-db
+    private_dependencies:
+      - keycloak-db
+    public_interfaces:
+      - http://auth.localhost
+    replaceable: true
+    owner: unassigned
+
+  - id: service-status
+    category: shared-capability
+    state: partial
+    implementation: kener
+    upstream:
+      name: Kener
+      version: v4.1.2
+      website: https://kener.ing
+      documentation: https://kener.ing/docs/v4/getting-started/introduction
+      source: https://github.com/rajnandan1/kener
+    type: stack
+    path: system/system-status
+    compose_services:
+      - status
+      - status-redis
+    private_dependencies:
+      - status-redis
+    public_interfaces:
+      - http://status.localhost
+    replaceable: true
+    owner: unassigned
+
+  - id: help-center
+    category: public-experience
+    state: missing
+    implementation: null
+    owner: unassigned
+
+  - id: notifications
+    category: shared-capability
+    state: missing
+    implementation: null
+    owner: unassigned
+
+  - id: client-experience
+    category: product-experience
+    state: missing
+    implementation: null
+    owner: unassigned
+
+  - id: administration
+    category: product-experience
+    state: missing
+    implementation: null
+    owner: unassigned
+
+  - id: business-domain
+    category: business-domain
+    state: missing
+    implementation: null
+    owner: unassigned
+
+  - id: integration-manager
+    category: integration
+    state: missing
+    implementation: null
+    owner: unassigned
+
+conformance:
+  standard: SPSS-1
+  state: candidate
+  reviewed: "2026-08-24"
+  audit: null
+  exceptions: []
