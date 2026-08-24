@@ -5,10 +5,9 @@ system. It assembles replaceable shared capabilities with product-specific
 business capabilities through one root development composition.
 
 The current implementation is an initial foundation slice: an NGINX gateway,
-a WordPress public website stack, a Keycloak identity stack, and a
-[Kener](https://kener.ing) service-status stack. Client, administration,
-notification, help-center, integration, and business-domain capabilities are
-not yet implemented.
+a WordPress public website stack, a Keycloak identity stack, and a Kener service
+status stack. Client, administration, notification, help-center, integration,
+and business-domain capabilities are not yet implemented.
 
 ## Product-system model
 
@@ -47,7 +46,7 @@ without preventing the gateway from starting.
 | `system/system-gateway/` | Gateway capability; currently implemented with NGINX |
 | `system/system-website/` | Public website capability; currently WordPress and MySQL |
 | `system/system-auth/` | Authentication capability; currently Keycloak and PostgreSQL |
-| `system/system-status/` | Service-status capability; currently [Kener](https://kener.ing), Redis, and SQLite |
+| `system/system-status/` | Service-status capability; currently Kener, Redis, and SQLite |
 | `templates/service/` | Runnable starting template for a future owned service repository |
 | `product-system.yaml` | Capability inventory, implementation selection, and maturity |
 | `composition/` | Catalogs, editions, deployment policies, schemas, and examples |
