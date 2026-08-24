@@ -11,11 +11,12 @@ model for structuring, developing, releasing, operating, and governing
 composable software products. The proposal is deliberately separate from the
 current runtime description and remains a draft for review.
 
-Start with the
-[Nexus Product System Wiki](https://github.com/PyKhaled/Nexus/wiki) for the
-concept brief, reference architecture, draft standard, policies, templates,
-machine-readable manifest example, and adoption checklist. The wiki is
-maintained as a separate Git repository in the local `wiki/` workspace.
+Start with the [documentation index](docs/README.md) for current Nexus
+architecture and operational material. Proposed features and their acceptance
+criteria live in [GitHub Issues](https://github.com/PyKhaled/Nexus/issues).
+Reusable, technology-neutral product-system guidance is maintained separately
+in Engineering OS; this repository records only the Nexus profile, decisions,
+implementation, and evidence.
 
 ## Architecture
 

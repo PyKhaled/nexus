@@ -15,6 +15,7 @@ beside their deployable boundary under `system/`.
 
 ## Conventions
 
+- Start new procedures from [`Runbook-Template.md`](Runbook-Template.md).
 - Name each runbook after the system or event it handles, such as
   `postgres-restore.md` or `gateway-upstream-failure.md`.
 - Keep stack dependencies in the owning stack's runbook directory.
