@@ -1,0 +1,16 @@
+apiVersion: nexus.io/composition/v1alpha1
+
+product:
+  name: nexus
+  edition: community
+  description: Complete local reference foundation
+
+deployment:
+  target: local
+  environment: development
+  assurance: standard
+
+capabilities:
+  gateway: nginx
+  website: wordpress
+  authentication: keycloak

@@ -422,7 +422,7 @@ module NexusCompose
         compose = Data.deep_merge(compose, fragment)
       end
       product_name = selection.dig("product", "name")
-      compose["name"] = product_name
+      compose["name"] = "#{product_name}-#{selection.dig("deployment", "environment")}"
       compose.fetch("networks").fetch("system")["name"] = "#{product_name}-system"
       validate_compose_structure(compose)
       compose
@@ -698,7 +698,7 @@ module NexusCompose
                 "production gateway redirects to HTTPS and requires mounted certificate material")
 
       selected_capabilities = components.map { |component| component.fetch("capability") }
-      dormant_routes = %w[website authentication service-status].reject { |capability| selected_capabilities.include?(capability) }
+      dormant_routes = %w[website authentication].reject { |capability| selected_capabilities.include?(capability) }
       warnings = dormant_routes.map do |capability|
         {
           "id" => "dormant-gateway-route-#{capability}",
@@ -784,7 +784,7 @@ module NexusCompose
       if keycloak
         keycloak["volumes"] = Array(keycloak["volumes"]).map do |mount|
           mount.to_s.sub(
-            %r{\A\./system/system-auth/system-auth/realm-config:},
+            %r{\A\./system/system-auth/realm-config:},
             "./assets/auth/realm-config:"
           )
         end
@@ -795,11 +795,11 @@ module NexusCompose
         database["volumes"] = Array(database["volumes"]).map do |mount|
           text = mount.to_s
           case text
-          when %r{\A\./system/system-auth/system-auth-db/data:}
-            text.sub(%r{\A\./system/system-auth/system-auth-db/data:}, "keycloak-db-data:")
-          when %r{\A\./system/system-auth/system-auth-db/config/}
+          when %r{\A\./system/system-auth-db/data:}
+            text.sub(%r{\A\./system/system-auth-db/data:}, "keycloak-db-data:")
+          when %r{\A\./system/system-auth-db/config/}
             text.sub(
-              %r{\A\./system/system-auth/system-auth-db/config/},
+              %r{\A\./system/system-auth-db/config/},
               "./assets/auth/postgres/"
             )
           else
@@ -878,9 +878,9 @@ module NexusCompose
 
     def copy_production_assets(destination)
       copies = {
-        File.join(repository.root, "system/system-auth/system-auth/realm-config") =>
+        File.join(repository.root, "system/system-auth/realm-config") =>
           File.join(destination, "assets/auth/realm-config"),
-        File.join(repository.root, "system/system-auth/system-auth-db/config") =>
+        File.join(repository.root, "system/system-auth-db/config") =>
           File.join(destination, "assets/auth/postgres"),
         File.join(repository.root, "system/system-gateway/templates-tls") =>
           File.join(destination, "assets/gateway/templates-tls")

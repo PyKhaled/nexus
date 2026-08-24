@@ -1,0 +1,13 @@
+apiVersion: nexus.io/edition/v1alpha1
+kind: Edition
+id: custom
+description: Explicit capability selection for a derived product
+defaults:
+  gateway: nginx
+required:
+  - gateway
+allowed:
+  - gateway
+  - website
+  - authentication
+entitlements: []

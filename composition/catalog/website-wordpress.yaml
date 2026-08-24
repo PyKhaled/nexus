@@ -1,0 +1,46 @@
+apiVersion: nexus.io/component/v1alpha1
+kind: ComponentImplementation
+capability: website
+implementation: wordpress
+type: stack
+fragment: composition/components/website/wordpress.compose.yml
+dependencies:
+  - gateway
+services:
+  - website
+  - website-db
+artifacts:
+  website:
+    mode: verified-mirror
+    repository: third-party/wordpress
+    upstream: wordpress:latest
+    digestVariable: WORDPRESS_IMAGE_DIGEST
+  website-db:
+    mode: verified-mirror
+    repository: third-party/mysql
+    upstream: mysql:8.0
+    digestVariable: MYSQL_IMAGE_DIGEST
+configuration:
+  APP_DOMAIN:
+    description: Public website hostname
+    developmentDefault: app.localhost
+    productionRequired: true
+  MYSQL_DATABASE:
+    description: WordPress database name
+    developmentDefault: wordpress
+    productionRequired: true
+  MYSQL_USER:
+    description: WordPress database user
+    developmentDefault: wordpress
+    productionRequired: true
+secrets:
+  MYSQL_ROOT_PASSWORD:
+    description: MySQL administrative password
+  MYSQL_PASSWORD:
+    description: WordPress database password
+security:
+  privateServices:
+    - website-db
+  supportsNoNewPrivileges:
+    - website
+    - website-db

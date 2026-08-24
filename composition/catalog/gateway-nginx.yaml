@@ -1,0 +1,56 @@
+apiVersion: nexus.io/component/v1alpha1
+kind: ComponentImplementation
+capability: gateway
+implementation: nginx
+type: service
+fragment: composition/components/gateway/nginx.compose.yml
+dependencies: []
+services:
+  - gateway
+artifacts:
+  gateway:
+    mode: internal-build
+    repository: system-gateway
+    source: system/system-gateway
+    digestVariable: GATEWAY_IMAGE_DIGEST
+configuration:
+  APP_DOMAIN:
+    description: Public website hostname
+    developmentDefault: app.localhost
+    productionRequired: false
+  AUTH_DOMAIN:
+    description: Public authentication hostname
+    developmentDefault: auth.localhost
+    productionRequired: false
+  API_DOMAIN:
+    description: Reserved public API hostname; system-service is a repository scaffold and is not yet a runnable upstream
+    developmentDefault: api.localhost
+    productionRequired: false
+  API_UPSTREAM:
+    description: Reserved API upstream address
+    developmentDefault: "api:8000"
+    productionRequired: false
+  API_RATE_LIMIT:
+    description: Reserved API gateway rate limit
+    developmentDefault: 20r/s
+    productionRequired: false
+  API_RATE_BURST:
+    description: Reserved API gateway rate limit burst
+    developmentDefault: "40"
+    productionRequired: false
+  GATEWAY_HTTP_PORT:
+    description: Published HTTP port
+    developmentDefault: "80"
+    productionRequired: false
+  GATEWAY_HTTPS_PORT:
+    description: Published HTTPS port
+    developmentDefault: "443"
+    productionRequired: false
+  TLS_CERT_DIR:
+    description: Absolute host path containing fullchain.pem and privkey.pem
+    productionRequired: true
+security:
+  publicServices:
+    - gateway
+  supportsNoNewPrivileges:
+    - gateway

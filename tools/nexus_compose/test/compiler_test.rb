@@ -15,9 +15,9 @@ class NexusComposeCompilerTest < Minitest::Test
   def test_development_example_resolves_complete_foundation
     result = @compiler.compile(example("nexus-development.yaml"))
 
-    assert_equal "nexus", result.compose.fetch("name")
+    assert_equal "nexus-development", result.compose.fetch("name")
     assert_equal "nexus-system", result.compose.dig("networks", "system", "name")
-    assert_equal %w[gateway keycloak keycloak-db status status-redis website website-db],
+    assert_equal %w[gateway keycloak keycloak-db website website-db],
                  result.compose.fetch("services").keys.sort
     assert result.compose.dig("services", "gateway").key?("build")
     assert result.lock.fetch("artifacts").none? { |artifact| artifact.fetch("digestResolved") }
@@ -62,14 +62,13 @@ class NexusComposeCompilerTest < Minitest::Test
     selection = selection_hash(
       edition: "community",
       capabilities: {
-        "website" => "disabled",
-        "service-status" => "kener"
+        "website" => "disabled"
       }
     )
 
     result = @compiler.compile(selection)
 
-    assert_equal %w[gateway keycloak keycloak-db status status-redis], result.compose.fetch("services").keys.sort
+    assert_equal %w[gateway keycloak keycloak-db], result.compose.fetch("services").keys.sort
     warning_ids = result.policy_report.fetch("warnings").map { |warning| warning.fetch("id") }
     assert_includes warning_ids, "dormant-gateway-route-website"
   end
@@ -99,7 +98,6 @@ class NexusComposeCompilerTest < Minitest::Test
     assert_equal "1", services.dig("gateway", "environment", "GATEWAY_TLS_REDIRECT")
     assert_includes services.dig("gateway", "ports"), "${GATEWAY_HTTPS_PORT:-443}:443"
     assert services.dig("gateway", "volumes").any? { |mount| mount.include?("/etc/nginx/ssl:ro") }
-    assert_equal "https://${STATUS_DOMAIN:?STATUS_DOMAIN is required}", services.dig("status", "environment", "ORIGIN")
     assert_equal "passed", result.policy_report.fetch("status")
     assert result.build_plan.dig("requirements", "sbom")
     assert result.build_plan.dig("requirements", "signature")

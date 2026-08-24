@@ -1,0 +1,66 @@
+---
+services:
+  keycloak:
+    build:
+      context: "./system/system-auth"
+      dockerfile: dockerfile
+    restart: unless-stopped
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    env_file:
+    - "./system/system-auth/.env.example"
+    - path: "./system/system-auth/.env"
+      required: false
+    volumes:
+    - "./system/system-auth/realm-config:/opt/keycloak/data/import:ro"
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - 'exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e ''GET /health/ready HTTP/1.1\r\nhost:
+        localhost\r\nConnection: close\r\n\r\n'' >&3 && grep -q ''"status": "UP"''
+        <&3'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    networks:
+    - system
+  keycloak-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file:
+    - "./system/system-auth-db/.env.example"
+    - path: "./system/system-auth-db/.env"
+      required: false
+    command:
+    - postgres
+    - "-c"
+    - config_file=/etc/postgresql/postgresql.conf
+    - "-c"
+    - hba_file=/etc/postgresql/pg_hba.conf
+    shm_size: 256mb
+    volumes:
+    - "./system/system-auth-db/data:/var/lib/postgresql/data"
+    - "./system/system-auth-db/config/postgresql.conf:/etc/postgresql/postgresql.conf:ro"
+    - "./system/system-auth-db/config/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro"
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    networks:
+    - system
