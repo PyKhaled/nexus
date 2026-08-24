@@ -1,0 +1,22 @@
+apiVersion: nexus.io/composition/v1alpha1
+
+product:
+  name: nexus
+  edition: enterprise
+  description: Self-hosted production reference selection
+
+deployment:
+  target: self-hosted
+  environment: production
+  assurance: hardened
+
+registry:
+  host: registry.example.com
+  namespace: nexus
+  policy: private-preferred
+
+capabilities:
+  gateway: nginx
+  website: wordpress
+  authentication: keycloak
+  service-status: kener

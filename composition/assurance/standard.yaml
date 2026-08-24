@@ -1,0 +1,11 @@
+apiVersion: nexus.io/assurance/v1alpha1
+kind: AssuranceProfile
+id: standard
+privateRegistry: optional
+immutableImages: false
+runtimeBuilds: environment
+requireSbom: false
+requireProvenance: false
+requireSignature: false
+denyDevelopmentDefaults: environment
+networkEgress: unrestricted

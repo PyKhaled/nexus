@@ -12,4 +12,8 @@ services:
       - ./system/system-gateway/templates-tls/01-default-tls.conf.template:/etc/nginx/templates/01-default-tls.conf.template:ro
       - ./system/system-gateway/templates-tls/11-app-tls.conf.template:/etc/nginx/templates/11-app-tls.conf.template:ro
       - ./system/system-gateway/templates-tls/21-auth-tls.conf.template:/etc/nginx/templates/21-auth-tls.conf.template:ro
-      - ./system/system-gateway/templates-tls/31-api-tls.conf.template:/etc/nginx/templates/31-api-tls.conf.template:ro
+      - ./system/system-gateway/templates-tls/25-status-tls.conf.template:/etc/nginx/templates/25-status-tls.conf.template:ro
+
+  status:
+    environment:
+      ORIGIN: https://${STATUS_DOMAIN:-status.localhost}

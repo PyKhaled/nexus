@@ -3,6 +3,8 @@ FROM nginx:1.29-alpine
 LABEL org.opencontainers.image.title="Nexus System Gateway"
 LABEL org.opencontainers.image.description="NGINX edge gateway for Nexus services"
 
+RUN rm /etc/nginx/conf.d/default.conf
+
 COPY --chown=101:101 nginx.conf /etc/nginx/nginx.conf
 COPY --chown=101:101 conf.d/ /etc/nginx/conf.d/
 COPY --chown=101:101 snippets/ /etc/nginx/snippets/

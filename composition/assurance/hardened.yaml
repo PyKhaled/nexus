@@ -1,0 +1,15 @@
+apiVersion: nexus.io/assurance/v1alpha1
+kind: AssuranceProfile
+id: hardened
+privateRegistry: required
+immutableImages: true
+runtimeBuilds: forbidden
+requireSbom: true
+requireProvenance: true
+requireSignature: true
+denyDevelopmentDefaults: true
+networkEgress: restricted
+runtimeSecurity:
+  noNewPrivileges: true
+  privilegedForbidden: true
+  privateDependencyPortsForbidden: true

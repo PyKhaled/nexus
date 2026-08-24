@@ -1,0 +1,49 @@
+services:
+  website:
+    image: wordpress:7.0.2-php8.3-apache
+    restart: unless-stopped
+    depends_on:
+      website-db:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: website-db:3306
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-wordpress}
+      WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-change-me-wordpress-password}
+    volumes:
+      - wordpress-data:/var/www/html
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - php -r '$$socket = @fsockopen("127.0.0.1", 80); if (!$$socket) { exit(1); } fclose($$socket);'
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - system
+
+  website-db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-wordpress-root-password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-wordpress}
+      MYSQL_USER: ${MYSQL_USER:-wordpress}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change-me-wordpress-password}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - website-db-data:/var/lib/mysql
+    networks:
+      - system
+
+volumes:
+  website-db-data:
+  wordpress-data:

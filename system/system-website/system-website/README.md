@@ -1,73 +1,14 @@
-# WordPress Website
+# WordPress Implementation Workspace
 
-A WordPress-based website built with Docker and Docker Compose.
+This directory contains local WordPress implementation material for the public
+website capability. The capability contract and current implementation status
+are documented in the stack-level [`README.md`](../README.md).
 
-## Project Structure
+The active root `compose.yml` currently runs the official WordPress image with
+named volumes. Files in this directory are not yet built into or mounted by the
+active composition, so themes, plugins, configuration, and content placed here
+must not be described as reproducible product behavior until that integration
+is implemented and verified.
 
-```
-system-website/
-├── wp-content/           # WordPress custom content
-│   ├── plugins/         # Custom plugins
-│   ├── themes/          # Custom themes
-│   └── uploads/         # Uploaded media files
-├── docker-compose.yml   # Docker Compose configuration
-├── .gitignore          # Git ignore rules
-├── .env.example        # Environment variables template
-└── README.md           # This file
-```
-
-## Getting Started
-
-### Prerequisites
-
-- Docker
-- Docker Compose
-
-### Setup
-
-1. Clone the repository:
-```bash
-git clone <repository-url> system-website
-cd system-website
-```
-
-2. Copy the environment template:
-```bash
-cp .env.example .env
-```
-
-3. Update `.env` with your configuration values
-
-4. Start the services:
-```bash
-docker-compose up -d
-```
-
-5. Access WordPress at: `http://localhost:8080`
-
-## Environment Variables
-
-See `.env.example` for all available configuration options.
-
-## Services
-
-- **wordpress**: WordPress application (port 8080)
-- **wordpress-db**: MySQL database (port 3306)
-
-## Development
-
-### Adding Custom Plugins
-
-Place custom plugins in `wp-content/plugins/`
-
-### Adding Custom Themes
-
-Place custom themes in `wp-content/themes/`
-
-## Deployment
-
-Update database credentials and configurations in `.env` before deploying to production.
-
-## License
-
-[Specify your license here]
+Do not store real credentials, uploads, generated caches, or environment state
+in source control.

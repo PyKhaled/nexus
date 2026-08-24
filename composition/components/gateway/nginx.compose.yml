@@ -1,0 +1,25 @@
+services:
+  gateway:
+    build:
+      context: ./system/system-gateway
+      dockerfile: Dockerfile
+    image: nexus/system-gateway:local
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-app.localhost}
+      APP_UPSTREAM: ${APP_UPSTREAM:-website:80}
+      AUTH_DOMAIN: ${AUTH_DOMAIN:-auth.localhost}
+      AUTH_UPSTREAM: ${AUTH_UPSTREAM:-keycloak:8080}
+      STATUS_DOMAIN: ${STATUS_DOMAIN:-status.localhost}
+      STATUS_UPSTREAM: ${STATUS_UPSTREAM:-status:3000}
+      GATEWAY_TLS_REDIRECT: ${GATEWAY_TLS_REDIRECT:-0}
+    ports:
+      - ${GATEWAY_HTTP_PORT:-80}:80
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      system:
+        aliases:
+          - ${APP_DOMAIN:-app.localhost}
+          - ${AUTH_DOMAIN:-auth.localhost}
+          - ${STATUS_DOMAIN:-status.localhost}
