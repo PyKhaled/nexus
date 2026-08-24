@@ -9,13 +9,9 @@ DC = $(COMPOSE) $(SECRETS_ENV_FLAG) -f compose.yml
         up down restart build rebuild ps logs \
         collect-secrets \
         gateway gateway-up gateway-test gateway-config gateway-reload \
-        auth website status loadbalancer \
+        auth website loadbalancer \
         auth-dbshell website-dbshell \
-        composition-plan composition-generate composition-validate composition-test \
         clean prune
-
-COMPOSITION_SELECTION ?= composition/examples/nexus-development.yaml
-COMPOSITION_OUTPUT ?= generated/nexus-development
 
 help:
 	@echo ""
@@ -41,11 +37,6 @@ help:
 	@echo " make gateway          Start only the gateway"
 	@echo " make auth             Start Keycloak + Postgres"
 	@echo " make website          Start WordPress + MySQL"
-	@echo " make status           Start Kener + Redis"
-	@echo " make composition-plan Resolve the selected product composition"
-	@echo " make composition-generate Generate Compose and deployment evidence"
-	@echo " make composition-validate Validate the generated composition"
-	@echo " make composition-test Run composition compiler tests"
 	@echo ""
 	@echo "Database"
 	@echo "========"
@@ -94,10 +85,10 @@ gateway-up:
 	$(DC) up -d --build gateway
 
 gateway-test:
-	$(DC) run --rm --no-deps --build gateway nginx -t
+	$(DC) run --rm --no-deps gateway nginx -t
 
 gateway-config:
-	$(DC) run --rm --no-deps --build gateway nginx -T
+	$(DC) run --rm --no-deps gateway nginx -T
 
 gateway-reload:
 	$(DC) exec gateway nginx -t
@@ -115,26 +106,6 @@ auth: gateway-up
 
 website: gateway-up
 	$(DC) up -d website website-db
-
-status: gateway-up
-	$(DC) up -d status status-redis
-
-##########################################
-# Product composition
-##########################################
-
-composition-plan:
-	bin/nexus-compose plan --selection $(COMPOSITION_SELECTION)
-
-composition-generate:
-	bin/nexus-compose generate --selection $(COMPOSITION_SELECTION) --output $(COMPOSITION_OUTPUT) --force
-
-composition-validate:
-	bin/nexus-compose validate $(COMPOSITION_OUTPUT)
-
-composition-test:
-	ruby -Itools/nexus_compose tools/nexus_compose/test/compiler_test.rb
-	ruby -Itools/nexus_compose tools/nexus_compose/test/cli_test.rb
 
 ##########################################
 # Database

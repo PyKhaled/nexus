@@ -1,6 +1,0 @@
-# Documentation example: optional unprotected HTTPS API route.
-# Apply with the TLS and API examples and with a reachable API service.
-services:
-  gateway:
-    volumes:
-      - ./system/system-gateway/templates-tls/31-api-tls.conf.template:/etc/nginx/templates/31-api-tls.conf.template:ro

@@ -1,8 +1,4 @@
 secrets.env
 .DS_Store
-**/.DS_Store
-**/.env
-**/__pycache__/
-**/*.py[cod]
 system/system-auth/system-auth-db/data/
 /wiki/

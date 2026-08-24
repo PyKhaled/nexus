@@ -2,10 +2,6 @@
 services:
   gateway:
     environment:
-      API_DOMAIN: ${API_DOMAIN:-api.localhost}
-      API_UPSTREAM: ${API_UPSTREAM:-api:8000}
-      API_RATE_LIMIT: ${API_RATE_LIMIT:-20r/s}
-      API_RATE_BURST: ${API_RATE_BURST:-40}
       AUTH_REQUEST_UPSTREAM: ${AUTH_REQUEST_UPSTREAM:-oauth2-proxy:4180}
     volumes:
       - ./system/system-gateway/templates-auth/oauth2-api.inc.template:/etc/nginx/templates/oauth2-api.inc.template:ro

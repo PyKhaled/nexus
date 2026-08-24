@@ -1,6 +1,0 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
-
-require_relative "../tools/nexus_compose/cli"
-
-exit NexusCompose::CLI.new(ARGV).run

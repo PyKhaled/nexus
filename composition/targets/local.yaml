@@ -1,7 +1,0 @@
-apiVersion: nexus.io/target/v1alpha1
-kind: DeploymentTarget
-id: local
-allowedEnvironments:
-  - development
-registryRequired: false
-externalSecretsRequired: false
