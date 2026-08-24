@@ -30,6 +30,7 @@ Issues and pull requests until they merge.
 - [Overseer integration](https://github.com/PyKhaled/Nexus/issues/2)
 - [Kener service status](https://github.com/PyKhaled/Nexus/issues/3)
 - [Product composition system](https://github.com/PyKhaled/Nexus/issues/4)
+- [Current-main evidence audit](https://github.com/PyKhaled/Nexus/issues/6)
 
 The linked issues own feature rationale, scope, risks, and acceptance criteria.
 Draft pull requests own implementation review and progress. Documentation must

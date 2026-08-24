@@ -73,6 +73,9 @@ is not current evidence. A new audit must identify an exact repository commit,
 record commands and observed results, and distinguish local runtime validation
 from shared-environment or production readiness.
 
+[Issue #6](https://github.com/PyKhaled/Nexus/issues/6) owns that fresh evidence
+pass.
+
 ## Reusable guidance
 
 The generic concept, reference architecture, proposed standard, policies, and
