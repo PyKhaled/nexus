@@ -66,7 +66,7 @@ help:
 ##########################################
 
 collect-secrets:
-	./scripts/collect-secrets.sh
+	bin/nexus-compose secrets --selection $(COMPOSITION_SELECTION) --output secrets.env
 
 ##########################################
 # Gateway lifecycle

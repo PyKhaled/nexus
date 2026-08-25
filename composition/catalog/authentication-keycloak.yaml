@@ -43,6 +43,27 @@ secrets:
   POSTGRES_PASSWORD:
     description: Keycloak PostgreSQL password
     scope: authentication-env
+secretsEnvFiles:
+  - system/system-auth/.env
+  - system/system-auth-db/.env
+production:
+  assetCopies:
+    - source: system/system-auth/realm-config
+      destination: assets/auth/realm-config
+    - source: system/system-auth-db/config
+      destination: assets/auth/postgres
+  volumeRewrites:
+    - service: keycloak
+      matchPrefix: "./system/system-auth/realm-config:"
+      replacement: "./assets/auth/realm-config:"
+    - service: keycloak-db
+      matchPrefix: "./system/system-auth-db/data:"
+      namedVolume: keycloak-db-data
+    - service: keycloak-db
+      matchPrefix: "./system/system-auth-db/config/"
+      replacement: "./assets/auth/postgres/"
+  gatewayVolumes:
+    - "./assets/gateway/templates-tls/21-auth-tls.conf.template:/etc/nginx/templates/21-auth-tls.conf.template:ro"
 security:
   privateServices:
     - keycloak-db

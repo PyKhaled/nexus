@@ -21,6 +21,7 @@ module NexusCompose
       when "plan" then plan
       when "generate" then generate
       when "validate" then validate
+      when "secrets" then secrets
       when "version", "--version", "-v"
         @output.puts VERSION
         0
@@ -86,6 +87,25 @@ module NexusCompose
       0
     end
 
+    def secrets
+      options = {}
+      parser = OptionParser.new do |opts|
+        opts.banner = "Usage: nexus-compose secrets --selection FILE --output FILE"
+        opts.on("--selection FILE", "Composition selection YAML") { |value| options[:selection] = value }
+        opts.on("--output FILE", "Merged secrets env file") { |value| options[:output] = value }
+      end
+      parser.parse!(@argv)
+      require_option!(options, :selection)
+      require_option!(options, :output)
+
+      report = @compiler.collect_secrets(options.fetch(:selection), options.fetch(:output))
+      @output.puts JSON.pretty_generate(Data.canonical(report))
+      if report.fetch("missingRequired").any?
+        @error.puts "warning: missing required secrets: #{report.fetch('missingRequired').join(', ')}"
+      end
+      0
+    end
+
     def require_option!(options, key)
       raise ValidationError, "--#{key} is required" unless options[key]
     end
@@ -100,6 +120,7 @@ module NexusCompose
           plan       Resolve a selection without writing generated files
           generate   Create Compose and its deployment evidence package
           validate   Validate a generated Compose file or directory
+          secrets    Merge selected components' .env files into one secrets file
           version    Print the generator version
           help       Show this help
       HELP

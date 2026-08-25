@@ -206,7 +206,59 @@ class NexusComposeCompilerTest < Minitest::Test
     assert_includes error.message, "unknown selection fields"
   end
 
+  def test_collect_secrets_merges_selected_components_env_files
+    with_website_env_content("MYSQL_PASSWORD=test-value\n", "MYSQL_ROOT_PASSWORD=test-root-value\n") do
+      Dir.mktmpdir("nexus-compose-secrets") do |directory|
+        output = File.join(directory, "secrets.env")
+        report = @compiler.collect_secrets(
+          selection_hash(edition: "custom", capabilities: {"gateway" => "nginx", "website" => "wordpress"}),
+          output
+        )
+
+        assert_equal %w[system/system-website-db/.env system/system-website/.env], report.fetch("envFiles").sort
+        content = File.read(output)
+        assert_includes content, "MYSQL_PASSWORD=test-value"
+        assert_includes content, "MYSQL_ROOT_PASSWORD=test-root-value"
+        assert_equal 0o600, File.stat(output).mode & 0o777
+      end
+    end
+  end
+
+  def test_collect_secrets_rejects_duplicate_keys
+    with_website_env_content("MYSQL_PASSWORD=one\n", "MYSQL_PASSWORD=two\n") do
+      Dir.mktmpdir("nexus-compose-secrets") do |directory|
+        error = assert_raises(NexusCompose::ValidationError) do
+          @compiler.collect_secrets(
+            selection_hash(edition: "custom", capabilities: {"gateway" => "nginx", "website" => "wordpress"}),
+            File.join(directory, "secrets.env")
+          )
+        end
+        assert_includes error.message, "duplicate secret keys"
+      end
+    end
+  end
+
+  def test_collect_secrets_reports_missing_required_secrets
+    Dir.mktmpdir("nexus-compose-secrets") do |directory|
+      report = @compiler.collect_secrets(example("nexus-development.yaml"), File.join(directory, "secrets.env"))
+      assert_includes report.fetch("missingRequired"), "KENER_SECRET_KEY"
+    end
+  end
+
   private
+
+  def with_website_env_content(website_content, website_db_content)
+    website_env = File.join(ROOT, "system/system-website/.env")
+    website_db_env = File.join(ROOT, "system/system-website-db/.env")
+    original_website = File.read(website_env)
+    original_website_db = File.read(website_db_env)
+    File.write(website_env, website_content)
+    File.write(website_db_env, website_db_content)
+    yield
+  ensure
+    File.write(website_env, original_website)
+    File.write(website_db_env, original_website_db)
+  end
 
   def example(name)
     File.join(ROOT, "composition", "examples", name)

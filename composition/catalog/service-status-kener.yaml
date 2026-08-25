@@ -28,6 +28,15 @@ configuration:
 secrets:
   KENER_SECRET_KEY:
     description: Kener application signing and encryption secret
+secretsEnvFiles:
+  - system/system-status/.env
+production:
+  gatewayVolumes:
+    - "./assets/gateway/templates-tls/25-status-tls.conf.template:/etc/nginx/templates/25-status-tls.conf.template:ro"
+  environmentOverrides:
+    - service: status
+      key: ORIGIN
+      value: "https://${STATUS_DOMAIN:?STATUS_DOMAIN is required}"
 security:
   privateServices:
     - status-redis
