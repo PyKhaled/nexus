@@ -16,6 +16,7 @@ The root `compose.yml` is the source of truth for local development. On current 
 - NGINX
 - keycloak
 - wordpress
+- kener and redis
 
 
 The repository also contains a service scaffold, Compose examples, and component documentation. Those artifacts do not by themselves establish a complete product, production readiness, operational coverage, or an accountable product owner.
@@ -46,7 +47,6 @@ See [Service and Stack Organization](service-and-stack-organization.md) for the 
 Planned work is not current architecture. It is tracked in GitHub:
 
 - [Overseer integration](https://github.com/PyKhaled/Nexus/issues/2)
-- [Kener service status](https://github.com/PyKhaled/Nexus/issues/3)
 - [Product composition system](https://github.com/PyKhaled/Nexus/issues/4)
 
 Help center, notifications, client and administration experiences, business

@@ -10,4 +10,5 @@ allowed:
   - gateway
   - website
   - authentication
+  - service-status
 entitlements: []

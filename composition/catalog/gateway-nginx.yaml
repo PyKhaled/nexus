@@ -22,6 +22,10 @@ configuration:
     description: Public authentication hostname
     developmentDefault: auth.localhost
     productionRequired: false
+  STATUS_DOMAIN:
+    description: Public service-status hostname
+    developmentDefault: status.localhost
+    productionRequired: false
   API_DOMAIN:
     description: Reserved public API hostname; system-service is a repository scaffold and is not yet a runnable upstream
     developmentDefault: api.localhost

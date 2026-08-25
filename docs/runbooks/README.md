@@ -10,6 +10,7 @@ This directory is the central discovery index; service-specific procedures remai
 | System Gateway | [`system/system-gateway/docs/runbooks/`](../../system/system-gateway/docs/runbooks/) | NGINX gateway operations |
 | Authentication stack | [`system/system-auth/docs/runbooks/`](../../system/system-auth/docs/runbooks/) | Keycloak and PostgreSQL operations |
 | Website stack | [`system/system-website/docs/runbooks/`](../../system/system-website/docs/runbooks/) | WordPress and MySQL operations |
+| Service status stack | [`system/system-status/docs/runbooks/`](../../system/system-status/docs/runbooks/) | Kener and Redis operations |
 | Service scaffold | [`system/system-service/docs/runbooks/`](../../system/system-service/docs/runbooks/) | Procedures for services created from the scaffold |
 
 ## Conventions

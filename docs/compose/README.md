@@ -27,8 +27,9 @@ docker compose up -d --build
 This starts:
 
 - NGINX gateway;
-- keycloak and its PostgreSQL database; and
-- wordpress website.
+- keycloak and its PostgreSQL database;
+- wordpress website; and
+- Kener status page and its Redis dependency.
 <!-- 
 The API upstream remains reserved as `api:8000`. `system-service` is currently a repository scaffold rather than a runnable Nexus API, so it is not declared in `compose.yml`. 
 -->

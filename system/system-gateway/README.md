@@ -24,6 +24,7 @@ time, so the gateway can start before its upstream applications.
 | --- | --- |
 | `http://app.localhost` | `website:80` |
 | `http://auth.localhost` | `keycloak:8080` |
+| `http://status.localhost` | `status:3000` |
 | `http://api.localhost` | `api:8000` |
 | `http://localhost/healthz` | Gateway liveness |
 | `http://localhost/readyz` | Gateway configuration readiness |
@@ -50,8 +51,8 @@ customize domains, upstreams, rate limits, or published ports. Compose defaults
 make this optional for local development.
 
 All routed applications must join the external Docker network named
-`nexus-system`. The `make website` and `make auth` commands start the gateway
-first and then attach their services to that network.
+`nexus-system`. The `make website`, `make auth`, and `make status` commands
+start the gateway first and then attach their services to that network.
 
 ## Build and validate
 
