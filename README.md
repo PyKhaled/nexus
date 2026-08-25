@@ -70,14 +70,18 @@ ok
 
 The root Make targets load `secrets.env` automatically when it exists.
 
-Generate `secrets.env` from every service-level `.env` file under `system/`:
+Generate `secrets.env` from the `.env` files of the components selected by
+`composition/examples/nexus-development.yaml` (override with
+`COMPOSITION_SELECTION`):
 
 ```sh
 make collect-secrets
 ```
 
-The collector stops if two files define the same key, preventing one service's
-value from silently replacing another's.
+This runs `bin/nexus-compose secrets`, which stops if two files define the
+same key — preventing one service's value from silently replacing another's —
+and warns about any required secret no `.env` file supplies yet. See
+`composition/README.md` for the full command reference.
 
 Then rebuild and start the environment:
 

@@ -88,6 +88,34 @@ class NexusComposeCliTest < Minitest::Test
     assert_includes output.string, "Usage: nexus-compose"
   end
 
+  def test_secrets_command
+    website_env = File.join(ROOT, "system/system-website/.env")
+    website_db_env = File.join(ROOT, "system/system-website-db/.env")
+    original_website = File.read(website_env)
+    original_website_db = File.read(website_db_env)
+    File.write(website_env, "MYSQL_PASSWORD=test-value\n")
+    File.write(website_db_env, "MYSQL_ROOT_PASSWORD=test-root-value\n")
+
+    Dir.mktmpdir("nexus-compose-cli") do |directory|
+      output = StringIO.new
+      errors = StringIO.new
+      destination = File.join(directory, "secrets.env")
+      status = run_cli(
+        ["secrets", "--selection", development_selection, "--output", destination],
+        output: output, error: errors
+      )
+
+      assert_equal 0, status, errors.string
+      assert_includes File.read(destination), "MYSQL_PASSWORD=test-value"
+      parsed = JSON.parse(output.string)
+      assert_equal destination, parsed.fetch("output")
+      assert_includes errors.string, "missing required secrets"
+    end
+  ensure
+    File.write(website_env, original_website)
+    File.write(website_db_env, original_website_db)
+  end
+
   private
 
   def development_selection

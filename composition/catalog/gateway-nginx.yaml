@@ -57,6 +57,26 @@ configuration:
   TLS_CERT_DIR:
     description: Absolute host path containing fullchain.pem and privkey.pem
     productionRequired: true
+production:
+  assetCopies:
+    - source: system/system-gateway/templates-tls
+      destination: assets/gateway/templates-tls
+  environmentOverrides:
+    - service: gateway
+      key: GATEWAY_TLS_REDIRECT
+      value: "1"
+    - service: gateway
+      key: TLS_CERTIFICATE
+      value: /etc/nginx/ssl/fullchain.pem
+    - service: gateway
+      key: TLS_CERTIFICATE_KEY
+      value: /etc/nginx/ssl/privkey.pem
+  portMappings:
+    - service: gateway
+      mapping: "${GATEWAY_HTTPS_PORT:-443}:443"
+  gatewayVolumes:
+    - "${TLS_CERT_DIR:?TLS_CERT_DIR is required}:/etc/nginx/ssl:ro"
+    - "./assets/gateway/templates-tls/01-default-tls.conf.template:/etc/nginx/templates/01-default-tls.conf.template:ro"
 security:
   publicServices:
     - gateway

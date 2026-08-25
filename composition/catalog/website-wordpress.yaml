@@ -38,6 +38,12 @@ secrets:
     description: MySQL administrative password
   MYSQL_PASSWORD:
     description: WordPress database password
+secretsEnvFiles:
+  - system/system-website/.env
+  - system/system-website-db/.env
+production:
+  gatewayVolumes:
+    - "./assets/gateway/templates-tls/11-app-tls.conf.template:/etc/nginx/templates/11-app-tls.conf.template:ro"
 security:
   privateServices:
     - website-db

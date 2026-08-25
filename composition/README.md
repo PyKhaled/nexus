@@ -44,8 +44,8 @@ production-auth approach.
 
 ## Commands
 
-`bin/nexus-compose` wraps `NexusCompose::Compiler`'s three read/write
-operations. Every command accepts a selection like
+`bin/nexus-compose` wraps `NexusCompose::Compiler`'s read/write operations.
+Every command accepts a selection like
 [`composition/examples/nexus-development.yaml`](examples/nexus-development.yaml)
 — see that file for the selection shape (`product`, `deployment`,
 `registry`, `capabilities`).
@@ -55,6 +55,7 @@ operations. Every command accepts a selection like
 | `bin/nexus-compose plan --selection FILE` | Resolve a selection and print the components, artifacts, and policy status as JSON, without writing anything. |
 | `bin/nexus-compose generate --selection FILE --output DIR [--force]` | Compile the selection and write a full deployment package to `DIR`. Refuses to replace a non-empty directory unless `--force` is given. |
 | `bin/nexus-compose validate PATH` | Validate a generated `compose.yml` or package directory: structure, the selection-digest/locked-image match, and (when Docker is available) `docker compose config`. |
+| `bin/nexus-compose secrets --selection FILE --output FILE` | Merge the `.env` files of the selection's components into one secrets file. Refuses to write on a duplicate key across files, and warns (without failing) about any of the components' declared `secrets:` names that no `.env` file supplies. |
 
 The equivalent Make targets default to `composition/examples/nexus-development.yaml`
 and `generated/nexus-development` (override with `COMPOSITION_SELECTION` /
@@ -65,10 +66,38 @@ make composition-plan
 make composition-generate
 make composition-validate
 make composition-test
+make collect-secrets
 ```
 
 `generated/` is gitignored beyond its own placeholder — a local
 `composition-generate` run is scratch output, not something to commit.
+
+## Catalog schema: `production` and `secretsEnvFiles`
+
+Two catalog fields are read declaratively by the compiler rather than being
+special-cased by capability name — this is what keeps `compiler.rb` from
+needing to know that "website" or "keycloak" exist:
+
+- `secretsEnvFiles: [path, ...]` — repo-relative paths to this component's own
+  `.env` file(s) (the ones `secrets` merges). A path that doesn't exist is
+  silently skipped, matching a fresh checkout before any `.env` has been
+  created from its `.env.example`.
+- `production:` — what this component needs when `deployment.environment` is
+  `production`, applied generically by `prepare_production_mounts!` /
+  `prepare_production_gateway!` / `copy_production_assets`:
+  - `assetCopies: [{source, destination}]` — directories copied into the
+    generated package's `assets/`.
+  - `volumeRewrites: [{service, matchPrefix, replacement}]` or
+    `[{service, matchPrefix, namedVolume}]` — rewrites a development
+    bind-mount prefix into its production form, or into a named volume.
+  - `gatewayVolumes: [mount, ...]` — volume mounts appended to the gateway
+    service (a TLS route template, a certificate mount).
+  - `environmentOverrides: [{service, key, value}]` / `portMappings:
+    [{service, mapping}]` — environment or port entries applied to a named
+    service.
+
+See `composition/catalog/authentication-keycloak.yaml` and
+`composition/catalog/gateway-nginx.yaml` for the fullest examples of each.
 
 ## Generated package contents
 
