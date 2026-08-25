@@ -11,7 +11,11 @@ DC = $(COMPOSE) $(SECRETS_ENV_FLAG) -f compose.yml
         gateway gateway-up gateway-test gateway-config gateway-reload \
         auth website status overseer loadbalancer \
         auth-dbshell website-dbshell \
+        composition-plan composition-generate composition-validate composition-test \
         clean prune
+
+COMPOSITION_SELECTION ?= composition/examples/nexus-development.yaml
+COMPOSITION_OUTPUT ?= generated/nexus-development
 
 help:
 	@echo ""
@@ -39,6 +43,13 @@ help:
 	@echo " make website          Start WordPress + MySQL"
 	@echo " make status           Start Kener + Redis"
 	@echo " make overseer         Start Overseer"
+	@echo ""
+	@echo "Product composition"
+	@echo "===================="
+	@echo " make composition-plan      Resolve the selected product composition"
+	@echo " make composition-generate  Generate Compose and deployment evidence"
+	@echo " make composition-validate  Validate the generated composition"
+	@echo " make composition-test      Run composition compiler and CLI tests"
 	@echo ""
 	@echo "Database"
 	@echo "========"
@@ -114,6 +125,23 @@ status: gateway-up
 
 overseer: gateway-up
 	$(DC) up -d overseer
+
+##########################################
+# Product composition
+##########################################
+
+composition-plan:
+	bin/nexus-compose plan --selection $(COMPOSITION_SELECTION)
+
+composition-generate:
+	bin/nexus-compose generate --selection $(COMPOSITION_SELECTION) --output $(COMPOSITION_OUTPUT) --force
+
+composition-validate:
+	bin/nexus-compose validate $(COMPOSITION_OUTPUT)
+
+composition-test:
+	ruby tools/nexus_compose/test/compiler_test.rb
+	ruby tools/nexus_compose/test/cli_test.rb
 
 ##########################################
 # Database
