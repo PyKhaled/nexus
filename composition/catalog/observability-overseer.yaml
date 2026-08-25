@@ -1,0 +1,28 @@
+apiVersion: nexus.io/component/v1alpha1
+kind: ComponentImplementation
+capability: observability
+implementation: overseer
+type: service
+fragment: composition/components/observability/overseer.compose.yml
+dependencies:
+  - gateway
+services:
+  - overseer
+artifacts:
+  overseer:
+    mode: verified-mirror
+    repository: third-party/overseer
+    upstream: ghcr.io/pykhaled/overseer:3.0.0
+    digestVariable: OVERSEER_IMAGE_DIGEST
+configuration:
+  OVERSEER_DOMAIN:
+    description: Public Overseer dashboard hostname
+    developmentDefault: overseer.localhost
+    productionRequired: true
+  OVERSEER_COMPOSE_PROJECT:
+    description: Compose project name Overseer discovers and controls
+    developmentDefault: nexus-development
+    productionRequired: false
+security:
+  supportsNoNewPrivileges:
+    - overseer

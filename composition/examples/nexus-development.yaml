@@ -15,3 +15,4 @@ capabilities:
   website: wordpress
   authentication: keycloak
   service-status: kener
+  observability: overseer

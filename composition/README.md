@@ -27,10 +27,19 @@ rationale and acceptance gate.
 | `authentication` | `keycloak` | `keycloak`, `keycloak-db` |
 | `website` | `wordpress` | `website`, `website-db` |
 | `service-status` | `kener` | `status`, `status-redis` |
+| `observability` | `overseer` | `overseer` |
 
 These match the services in the root [`compose.yml`](../compose.yml) exactly;
 `nexus-development.yaml` is compiled and compared against it in
 [`compiler_test.rb`](../tools/nexus_compose/test/compiler_test.rb).
+
+`observability` is selected in `nexus-development.yaml` only. It is
+deliberately **absent** from `nexus-self-hosted-production.yaml` and
+`nexus-high-assurance.yaml`: Overseer has no built-in authentication and
+mounts the Docker socket, so it must not appear in a composition whose policy
+report can pass without an authenticating overlay in front of it. See
+`system/system-overseer/README.md` for the drafted (not yet implemented)
+production-auth approach.
 
 ## Running the tests
 

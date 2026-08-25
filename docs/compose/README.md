@@ -28,8 +28,9 @@ This starts:
 
 - NGINX gateway;
 - keycloak and its PostgreSQL database;
-- wordpress website; and
-- Kener status page and its Redis dependency.
+- wordpress website;
+- Kener status page and its Redis dependency; and
+- overseer.
 <!-- 
 The API upstream remains reserved as `api:8000`. `system-service` is currently a repository scaffold rather than a runnable Nexus API, so it is not declared in `compose.yml`. 
 -->

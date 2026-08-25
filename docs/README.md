@@ -22,7 +22,6 @@ Issues and pull requests until they merge.
 
 ## Proposed work
 
-- [Overseer integration](https://github.com/PyKhaled/Nexus/issues/2)
 - [Product composition system](https://github.com/PyKhaled/Nexus/issues/4)
 - [Current-main evidence audit](https://github.com/PyKhaled/Nexus/issues/6)
 
