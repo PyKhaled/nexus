@@ -11,4 +11,5 @@ allowed:
   - website
   - authentication
   - service-status
+  - observability
 entitlements: []

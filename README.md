@@ -27,10 +27,11 @@ browser / API client
         v
 Nexus System Gateway (NGINX :80)
         |
-        +-- app.localhost    --> website:80
-        +-- auth.localhost   --> keycloak:8080
-        +-- status.localhost --> status:3000
-        +-- api.localhost    --> api:8000
+        +-- app.localhost      --> website:80
+        +-- auth.localhost     --> keycloak:8080
+        +-- status.localhost   --> status:3000
+        +-- overseer.localhost --> overseer:8765
+        +-- api.localhost      --> api:8000
 ```
 
 The gateway can run without its upstream applications. Docker service names
@@ -45,6 +46,7 @@ without preventing the gateway from starting.
 | `system/system-auth/` | Optional Keycloak and PostgreSQL stack |
 | `system/system-website/` | Optional WordPress and MySQL stack |
 | `system/system-status/` | Optional Kener status page and Redis stack |
+| `system/system-overseer/` | Optional Overseer observability and control dashboard |
 
 ## Start the development environment
 
@@ -56,9 +58,9 @@ make up
 curl http://localhost/healthz
 ```
 
-This starts the gateway, Keycloak with PostgreSQL, WordPress with MySQL, and
-Kener with Redis. The reference `system-service` scaffold is not runnable and
-is therefore not started by Compose.
+This starts the gateway, Keycloak with PostgreSQL, WordPress with MySQL,
+Kener with Redis, and Overseer. The reference `system-service` scaffold is
+not runnable and is therefore not started by Compose.
 
 Expected response:
 
@@ -92,6 +94,7 @@ part of the environment:
 make website
 make auth
 make status
+make overseer
 make gateway
 ```
 

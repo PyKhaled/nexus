@@ -25,6 +25,7 @@ time, so the gateway can start before its upstream applications.
 | `http://app.localhost` | `website:80` |
 | `http://auth.localhost` | `keycloak:8080` |
 | `http://status.localhost` | `status:3000` |
+| `http://overseer.localhost` | `overseer:8765` |
 | `http://api.localhost` | `api:8000` |
 | `http://localhost/healthz` | Gateway liveness |
 | `http://localhost/readyz` | Gateway configuration readiness |
@@ -35,6 +36,14 @@ The API route applies a per-client rate limit. An unavailable upstream returns
 The normal route does not require authentication. The documented API-auth
 Compose example replaces the API templates with an OAuth2 Proxy `auth_request`
 integration while leaving the application and identity routes public.
+
+The `overseer.localhost` route is unauthenticated like the others, but unlike
+the others it fronts an administrative surface: Overseer can inspect and
+restart this project's containers through the Docker socket. Do not expose
+this route, or the gateway generally, beyond a trusted local network without
+adding authentication in front of it first — see
+`system/system-overseer/README.md` for the security details and the drafted
+approach for a future protected overlay.
 
 ## Run with Docker Compose
 
@@ -51,8 +60,9 @@ customize domains, upstreams, rate limits, or published ports. Compose defaults
 make this optional for local development.
 
 All routed applications must join the external Docker network named
-`nexus-system`. The `make website`, `make auth`, and `make status` commands
-start the gateway first and then attach their services to that network.
+`nexus-system`. The `make website`, `make auth`, `make status`, and
+`make overseer` commands start the gateway first and then attach their
+services to that network.
 
 ## Build and validate
 

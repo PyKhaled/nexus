@@ -13,6 +13,8 @@ services:
       AUTH_UPSTREAM: ${AUTH_UPSTREAM:-keycloak:8080}
       STATUS_DOMAIN: ${STATUS_DOMAIN:-status.localhost}
       STATUS_UPSTREAM: ${STATUS_UPSTREAM:-status:3000}
+      OVERSEER_DOMAIN: ${OVERSEER_DOMAIN:-overseer.localhost}
+      OVERSEER_UPSTREAM: ${OVERSEER_UPSTREAM:-overseer:8765}
       API_DOMAIN: ${API_DOMAIN:-api.localhost}
       API_UPSTREAM: ${API_UPSTREAM:-api:8000}
       API_RATE_LIMIT: ${API_RATE_LIMIT:-20r/s}
@@ -28,6 +30,7 @@ services:
           - ${APP_DOMAIN:-app.localhost}
           - ${AUTH_DOMAIN:-auth.localhost}
           - ${STATUS_DOMAIN:-status.localhost}
+          - ${OVERSEER_DOMAIN:-overseer.localhost}
           - ${API_DOMAIN:-api.localhost}
 
   keycloak:
@@ -172,6 +175,27 @@ services:
       timeout: 5s
       retries: 10
       start_period: 15s
+    networks:
+      - system
+
+  overseer:
+    image: ghcr.io/pykhaled/overseer:3.0.0
+    restart: unless-stopped
+    environment:
+      OVERSEER_COMPOSE_PROJECT: ${OVERSEER_COMPOSE_PROJECT:-nexus-development}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/healthz', timeout=2)"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - system
 
