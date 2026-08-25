@@ -17,7 +17,7 @@ class NexusComposeCompilerTest < Minitest::Test
 
     assert_equal "nexus-development", result.compose.fetch("name")
     assert_equal "nexus-system", result.compose.dig("networks", "system", "name")
-    assert_equal %w[gateway keycloak keycloak-db website website-db],
+    assert_equal %w[gateway keycloak keycloak-db status status-redis website website-db],
                  result.compose.fetch("services").keys.sort
     assert result.compose.dig("services", "gateway").key?("build")
     assert result.lock.fetch("artifacts").none? { |artifact| artifact.fetch("digestResolved") }
@@ -62,13 +62,14 @@ class NexusComposeCompilerTest < Minitest::Test
     selection = selection_hash(
       edition: "community",
       capabilities: {
-        "website" => "disabled"
+        "website" => "disabled",
+        "service-status" => "kener"
       }
     )
 
     result = @compiler.compile(selection)
 
-    assert_equal %w[gateway keycloak keycloak-db], result.compose.fetch("services").keys.sort
+    assert_equal %w[gateway keycloak keycloak-db status status-redis], result.compose.fetch("services").keys.sort
     warning_ids = result.policy_report.fetch("warnings").map { |warning| warning.fetch("id") }
     assert_includes warning_ids, "dormant-gateway-route-website"
   end

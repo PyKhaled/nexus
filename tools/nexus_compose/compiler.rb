@@ -698,7 +698,7 @@ module NexusCompose
                 "production gateway redirects to HTTPS and requires mounted certificate material")
 
       selected_capabilities = components.map { |component| component.fetch("capability") }
-      dormant_routes = %w[website authentication].reject { |capability| selected_capabilities.include?(capability) }
+      dormant_routes = %w[website authentication service-status].reject { |capability| selected_capabilities.include?(capability) }
       warnings = dormant_routes.map do |capability|
         {
           "id" => "dormant-gateway-route-#{capability}",

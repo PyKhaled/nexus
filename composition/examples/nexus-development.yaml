@@ -14,3 +14,4 @@ capabilities:
   gateway: nginx
   website: wordpress
   authentication: keycloak
+  service-status: kener

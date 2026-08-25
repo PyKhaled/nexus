@@ -26,16 +26,11 @@ rationale and acceptance gate.
 | `gateway` | `nginx` | `gateway` |
 | `authentication` | `keycloak` | `keycloak`, `keycloak-db` |
 | `website` | `wordpress` | `website`, `website-db` |
+| `service-status` | `kener` | `status`, `status-redis` |
 
-These three match the services in the root [`compose.yml`](../compose.yml)
-exactly; `nexus-development.yaml` is compiled and compared against it in
+These match the services in the root [`compose.yml`](../compose.yml) exactly;
+`nexus-development.yaml` is compiled and compared against it in
 [`compiler_test.rb`](../tools/nexus_compose/test/compiler_test.rb).
-
-A `service-status` capability (Kener) existed in the original prototype of
-this system but is intentionally **not** included here. It is tracked as its
-own feature in [issue #3](https://github.com/PyKhaled/Nexus/issues/3) and
-should be added as a new catalog entry when that issue is picked up, not
-inferred from this directory.
 
 ## Running the tests
 

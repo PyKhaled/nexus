@@ -9,7 +9,7 @@ DC = $(COMPOSE) $(SECRETS_ENV_FLAG) -f compose.yml
         up down restart build rebuild ps logs \
         collect-secrets \
         gateway gateway-up gateway-test gateway-config gateway-reload \
-        auth website loadbalancer \
+        auth website status loadbalancer \
         auth-dbshell website-dbshell \
         clean prune
 
@@ -37,6 +37,7 @@ help:
 	@echo " make gateway          Start only the gateway"
 	@echo " make auth             Start Keycloak + Postgres"
 	@echo " make website          Start WordPress + MySQL"
+	@echo " make status           Start Kener + Redis"
 	@echo ""
 	@echo "Database"
 	@echo "========"
@@ -106,6 +107,9 @@ auth: gateway-up
 
 website: gateway-up
 	$(DC) up -d website website-db
+
+status: gateway-up
+	$(DC) up -d status status-redis
 
 ##########################################
 # Database
