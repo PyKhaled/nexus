@@ -62,7 +62,7 @@ the gateway first, then attaches its own service(s) to `nexus-system`. Run
 | `composition/` + `tools/nexus_compose/` + `bin/nexus-compose` | A separate generator that can compile a declarative selection (edition/environment/target/assurance/capabilities) into a Compose deployment package. Not wired into the default workflow — `compose.yml` stays hand-maintained and the generator is kept in sync with it by tests. See `composition/README.md`. |
 | `docs/` | Canonical documentation index (`docs/README.md`), architecture decisions, Compose mode reference, runbook index, and reusable templates (component README, runbook, ADR). |
 | `product-system.yaml` | The declarative product-capability model referenced above. |
-| `scripts/collect-secrets.sh` | Merges every service-level `.env` into root `secrets.env`, which `make` loads automatically when present. |
+| `bin/nexus-compose secrets` | Merges the selected components' `.env` files into root `secrets.env`; `make collect-secrets` runs it, and other root Make targets load the result automatically when present. |
 
 ## The mental model
 
