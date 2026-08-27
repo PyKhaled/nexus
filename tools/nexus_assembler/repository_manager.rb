@@ -5,7 +5,7 @@ require "open3"
 require "tempfile"
 require_relative "assembler"
 
-module NexusCompose
+module NexusAssembler
   GitResult = Struct.new(:stdout, :stderr, :success?, keyword_init: true)
 
   class RepositoryManager

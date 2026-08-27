@@ -24,7 +24,7 @@ trying to become.
 
 - Docker and Docker Compose v2 (`docker compose version`)
 - Ruby (any recent 3.x) — only needed for Nexus Assembler under
-  `tools/nexus_compose/` and its tests, not for running the stack itself
+  `tools/nexus_assembler/` and its tests, not for running the stack itself
 
 ## Quick start
 
@@ -59,7 +59,7 @@ Assembler targets described below.
 | `compose.yml` | The one active Compose definition. Source of truth for local development; every `make` target reads it. |
 | `makefile` | Every supported operation — stack lifecycle, gateway operations, database shells, composition tooling. Start here before running a raw `docker compose` command by hand. |
 | `system/` | One directory per deployable service or stack (`system-gateway`, `system-auth` + `system-auth-db`, `system-website` + `system-website-db`, `system-status`, `system-overseer`, and the non-runnable `system-service` scaffold). Each owns its own README, config, and `docs/runbooks/`. |
-| `composition/` + `tools/nexus_compose/` + `bin/nexus` | Nexus Assembler turns a declarative blueprint (edition/environment/target/assurance/capabilities) into a Compose deployment package. Not wired into the default workflow — `compose.yml` stays hand-maintained and the Assembler is kept in sync with it by tests. See `composition/README.md`. |
+| `composition/` + `tools/nexus_assembler/` + `bin/nexus` | Nexus Assembler turns a declarative blueprint (edition/environment/target/assurance/capabilities) into a Compose deployment package. Not wired into the default workflow — `compose.yml` stays hand-maintained and the Assembler is kept in sync with it by tests. See `composition/README.md`. |
 | `docs/` | Canonical documentation index (`docs/README.md`), architecture decisions, Compose mode reference, runbook index, and reusable templates (component README, runbook, ADR). |
 | `product-system.yaml` | The declarative product-capability model referenced above. |
 | `bin/nexus secrets --blueprint FILE` | Merges the blueprint components' `.env` files into root `secrets.env`; `make collect-secrets` runs it, and other root Make targets load the result automatically when present. |
@@ -125,9 +125,9 @@ Full decision record: `docs/architecture/service-and-stack-organization.md`.
 
 - [ ] `make gateway-test` if you touched anything under `system/system-gateway/`
 - [ ] `docker compose -f compose.yml config --quiet` if you touched `compose.yml`
-- [ ] `ruby tools/nexus_compose/test/compiler_test.rb` and
-      `ruby tools/nexus_compose/test/cli_test.rb` (or `make composition-test`)
-      if you touched `composition/` or `tools/nexus_compose/`
+- [ ] `ruby tools/nexus_assembler/test/assembler_test.rb` and
+      `ruby tools/nexus_assembler/test/cli_test.rb` (or `make assembler-test`)
+      if you touched `composition/` or `tools/nexus_assembler/`
 - [ ] New or changed service: does it have a README, a runbook index entry,
       and — if it's gateway-routed — a documented route?
 - [ ] Does anything you removed or scoped down need a note explaining why,

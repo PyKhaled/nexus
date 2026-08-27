@@ -5,10 +5,10 @@ require "optparse"
 require_relative "assembler"
 require_relative "repository_manager"
 
-module NexusCompose
+module NexusAssembler
   class CLI
     def initialize(argv, input: $stdin, output: $stdout, error: $stderr, repository: Repository.new,
-                   repository_manager: nil, program_name: "nexus-compose")
+                   repository_manager: nil, program_name: "nexus")
       @argv = argv.dup
       @input = input
       @output = output
@@ -23,8 +23,7 @@ module NexusCompose
       command = @argv.shift
       case command
       when "plan" then plan
-      when "assemble" then assemble(command)
-      when "generate", "compose" then assemble(command)
+      when "assemble" then assemble
       when "validate" then validate
       when "secrets" then secrets
       when "repository", "repo" then repository_command
@@ -37,7 +36,7 @@ module NexusCompose
       else
         raise ValidationError, "unknown command #{command.inspect}\n\n#{help}"
       end
-    rescue NexusCompose::Error, OptionParser::ParseError => e
+    rescue NexusAssembler::Error, OptionParser::ParseError => e
       @error.puts "error: #{e.message}"
       2
     end
@@ -57,10 +56,10 @@ module NexusCompose
       0
     end
 
-    def assemble(command = "assemble")
+    def assemble
       options = {force: false}
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: #{@program_name} #{command} --blueprint FILE --output DIRECTORY [--force]"
+        opts.banner = "Usage: #{@program_name} assemble --blueprint FILE --output DIRECTORY [--force]"
         blueprint_options(opts, options)
         opts.on("--output DIRECTORY", "Deployment package directory") { |value| options[:output] = value }
         opts.on("--force", "Replace an existing deployment package") { options[:force] = true }
@@ -204,7 +203,6 @@ module NexusCompose
 
     def blueprint_options(parser, options)
       parser.on("--blueprint FILE", "Blueprint YAML") { |value| options[:blueprint] = value }
-      parser.on("--selection FILE", "Legacy alias for --blueprint") { |value| options[:blueprint] = value }
     end
 
     def help
@@ -219,8 +217,6 @@ module NexusCompose
           validate   Validate a Compose file or deployment package
           secrets    Merge blueprint components' .env files into one secrets file
           repository Manage source repositories under system/
-          compose    Legacy alias for assemble
-          generate   Legacy alias for assemble
           version    Print the Assembler version
           help       Show this help
       HELP

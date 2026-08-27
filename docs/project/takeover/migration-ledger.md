@@ -12,7 +12,7 @@ organization-level standards.
 | --- | --- | --- |
 | Current product scope and evidence state | [Product-system profile](../../architecture/product-system-profile.md) | Commit-bound evidence supports the wording |
 | Service and stack boundaries | [Service and stack organization](../../architecture/service-and-stack-organization.md) | Architecture decision and implementation remain aligned |
-| Composition behavior, selections, policies, and gaps | [Composition documentation](../../../composition/README.md), `composition/`, and `tools/nexus_compose/` | Code, tests, examples, and documentation change together |
+| Assembly behavior, blueprints, policies, and gaps | [Composition documentation](../../../composition/README.md), `composition/`, and `tools/nexus_assembler/` | Code, tests, examples, and documentation change together |
 | Material architecture choice | `docs/decisions/` | Decision authority and status are recorded |
 | Proposed feature, defect, or validation work | [GitHub Issues](https://github.com/PyKhaled/Nexus/issues) | Scope and acceptance criteria are explicit |
 | Service operating procedure | Owning service's `docs/runbooks/` directory | Procedure, environment, prerequisites, safety, verification, and review evidence exist |

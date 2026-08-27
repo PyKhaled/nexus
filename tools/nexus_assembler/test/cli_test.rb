@@ -6,16 +6,16 @@ require "stringio"
 require "tmpdir"
 require_relative "../cli"
 
-class NexusComposeCliTest < Minitest::Test
+class NexusAssemblerCliTest < Minitest::Test
   ROOT = File.expand_path("../../..", __dir__)
 
   def setup
-    @repository = NexusCompose::Repository.new(ROOT)
+    @repository = NexusAssembler::Repository.new(ROOT)
   end
 
   def test_plan_command
     output = StringIO.new
-    status = run_cli(["plan", "--selection", development_selection], output: output)
+    status = run_cli(["plan", "--blueprint", development_blueprint], output: output)
 
     assert_equal 0, status
     parsed = JSON.parse(output.string)
@@ -23,56 +23,26 @@ class NexusComposeCliTest < Minitest::Test
     assert_equal "passed", parsed.fetch("policyStatus")
   end
 
-  def test_generate_command
-    Dir.mktmpdir("nexus-compose-cli") do |directory|
-      output = StringIO.new
-      errors = StringIO.new
-      status = run_cli(
-        ["generate", "--selection", development_selection, "--output", File.join(directory, "out")],
-        output: output, error: errors
-      )
-
-      assert_equal 0, status, errors.string
-      assert File.file?(File.join(directory, "out", "compose.yml"))
-      assert_equal "passed", JSON.parse(output.string).fetch("status")
-    end
-  end
-
-  def test_assemble_uses_blueprint_vocabulary
+  def test_assemble_command
     Dir.mktmpdir("nexus-assembler-cli") do |directory|
       output = StringIO.new
       errors = StringIO.new
       destination = File.join(directory, "package")
       status = run_cli(
-        ["assemble", "--blueprint", development_selection, "--output", destination],
+        ["assemble", "--blueprint", development_blueprint, "--output", destination],
         output: output, error: errors
       )
 
       assert_equal 0, status, errors.string
       assert File.file?(File.join(destination, "blueprint.yaml"))
-      refute File.exist?(File.join(destination, "selection.yaml"))
       assert_equal destination, JSON.parse(output.string).fetch("deploymentPackage")
-    end
-  end
-
-  def test_compose_is_an_alias_for_generate
-    Dir.mktmpdir("nexus-compose-cli") do |directory|
-      output = StringIO.new
-      errors = StringIO.new
-      status = run_cli(
-        ["compose", "--selection", development_selection, "--output", File.join(directory, "out")],
-        output: output, error: errors
-      )
-
-      assert_equal 0, status, errors.string
-      assert File.file?(File.join(directory, "out", "compose.yml"))
     end
   end
 
   def test_repository_list_with_no_declarations
     output = StringIO.new
     status = run_cli(
-      ["repository", "list", "--selection", development_selection],
+      ["repository", "list", "--blueprint", development_blueprint],
       output: output
     )
 
@@ -80,10 +50,10 @@ class NexusComposeCliTest < Minitest::Test
     assert_equal [], JSON.parse(output.string).fetch("repositories")
   end
 
-  def test_compose_rejects_a_missing_required_repository
-    Dir.mktmpdir("nexus-compose-cli") do |directory|
-      selection = NexusCompose::Data.load_yaml(development_selection)
-      selection["repositories"] = [
+  def test_assemble_rejects_a_missing_required_repository
+    Dir.mktmpdir("nexus-assembler-cli") do |directory|
+      blueprint = NexusAssembler::Data.load_yaml(development_blueprint)
+      blueprint["repositories"] = [
         {
           "name" => "missing-service",
           "url" => "https://example.com/missing-service.git",
@@ -91,12 +61,12 @@ class NexusComposeCliTest < Minitest::Test
           "required" => true
         }
       ]
-      selection_path = File.join(directory, "selection.yaml")
-      File.write(selection_path, NexusCompose::Data.yaml(selection))
+      blueprint_path = File.join(directory, "blueprint.yaml")
+      File.write(blueprint_path, NexusAssembler::Data.yaml(blueprint))
       errors = StringIO.new
 
       status = run_cli(
-        ["compose", "--selection", selection_path, "--output", File.join(directory, "out")],
+        ["assemble", "--blueprint", blueprint_path, "--output", File.join(directory, "out")],
         error: errors
       )
 
@@ -106,13 +76,13 @@ class NexusComposeCliTest < Minitest::Test
     end
   end
 
-  def test_generate_refuses_to_replace_without_force
-    Dir.mktmpdir("nexus-compose-cli") do |directory|
+  def test_assemble_refuses_to_replace_without_force
+    Dir.mktmpdir("nexus-assembler-cli") do |directory|
       destination = File.join(directory, "out")
-      run_cli(["generate", "--selection", development_selection, "--output", destination])
+      run_cli(["assemble", "--blueprint", development_blueprint, "--output", destination])
 
       errors = StringIO.new
-      status = run_cli(["generate", "--selection", development_selection, "--output", destination], error: errors)
+      status = run_cli(["assemble", "--blueprint", development_blueprint, "--output", destination], error: errors)
 
       assert_equal 2, status
       assert_includes errors.string, "not empty"
@@ -120,9 +90,9 @@ class NexusComposeCliTest < Minitest::Test
   end
 
   def test_validate_command
-    Dir.mktmpdir("nexus-compose-cli") do |directory|
+    Dir.mktmpdir("nexus-assembler-cli") do |directory|
       destination = File.join(directory, "out")
-      run_cli(["generate", "--selection", development_selection, "--output", destination])
+      run_cli(["assemble", "--blueprint", development_blueprint, "--output", destination])
 
       output = StringIO.new
       status = run_cli(["validate", destination], output: output)
@@ -134,7 +104,7 @@ class NexusComposeCliTest < Minitest::Test
 
   def test_missing_required_option_is_rejected
     errors = StringIO.new
-    status = run_cli(["generate", "--selection", development_selection], error: errors)
+    status = run_cli(["assemble", "--blueprint", development_blueprint], error: errors)
 
     assert_equal 2, status
     assert_includes errors.string, "--output is required"
@@ -148,12 +118,30 @@ class NexusComposeCliTest < Minitest::Test
     assert_includes errors.string, "unknown command"
   end
 
+  def test_removed_command_aliases_are_rejected
+    %w[compose generate].each do |command|
+      errors = StringIO.new
+      status = run_cli([command], error: errors)
+
+      assert_equal 2, status
+      assert_includes errors.string, "unknown command"
+    end
+  end
+
+  def test_removed_selection_option_is_rejected
+    errors = StringIO.new
+    status = run_cli(["plan", "--selection", development_blueprint], error: errors)
+
+    assert_equal 2, status
+    assert_includes errors.string, "invalid option: --selection"
+  end
+
   def test_help_without_command_returns_nonzero
     output = StringIO.new
     status = run_cli([], output: output)
 
     assert_equal 1, status
-    assert_includes output.string, "Usage: nexus-compose"
+    assert_includes output.string, "Usage: nexus"
   end
 
   def test_secrets_command
@@ -164,12 +152,12 @@ class NexusComposeCliTest < Minitest::Test
     File.write(website_env, "MYSQL_PASSWORD=test-value\n")
     File.write(website_db_env, "MYSQL_ROOT_PASSWORD=test-root-value\n")
 
-    Dir.mktmpdir("nexus-compose-cli") do |directory|
+    Dir.mktmpdir("nexus-assembler-cli") do |directory|
       output = StringIO.new
       errors = StringIO.new
       destination = File.join(directory, "secrets.env")
       status = run_cli(
-        ["secrets", "--selection", development_selection, "--output", destination],
+        ["secrets", "--blueprint", development_blueprint, "--output", destination],
         output: output, error: errors
       )
 
@@ -186,11 +174,11 @@ class NexusComposeCliTest < Minitest::Test
 
   private
 
-  def development_selection
+  def development_blueprint
     File.join(ROOT, "composition/examples/nexus-development.yaml")
   end
 
   def run_cli(argv, output: StringIO.new, error: StringIO.new)
-    NexusCompose::CLI.new(argv, output: output, error: error, repository: @repository).run
+    NexusAssembler::CLI.new(argv, output: output, error: error, repository: @repository).run
   end
 end

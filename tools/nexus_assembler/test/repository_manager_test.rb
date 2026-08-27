@@ -5,13 +5,13 @@ require "fileutils"
 require "tmpdir"
 require_relative "../repository_manager"
 
-class NexusComposeRepositoryManagerTest < Minitest::Test
+class NexusAssemblerRepositoryManagerTest < Minitest::Test
   def test_add_declares_and_clones_a_real_submodule
-    with_git_repositories do |root, child, selection|
+    with_git_repositories do |root, child, blueprint|
       manager = manager_with_local_protocol(root)
 
       report = manager.add(
-        selection,
+        blueprint,
         name: "system-service",
         url: child,
         branch: "main"
@@ -21,22 +21,22 @@ class NexusComposeRepositoryManagerTest < Minitest::Test
       assert File.file?(File.join(root, ".gitmodules"))
       assert File.directory?(File.join(root, "system/system-service/.git")) ||
              File.file?(File.join(root, "system/system-service/.git"))
-      declared = NexusCompose::Data.load_yaml(selection).fetch("repositories").first
+      declared = NexusAssembler::Data.load_yaml(blueprint).fetch("repositories").first
       assert_equal "system/system-service", declared.fetch("path")
       assert_equal child, declared.fetch("url")
-      assert_equal "passed", manager.validate(selection).fetch("status")
+      assert_equal "passed", manager.validate(blueprint).fetch("status")
     end
   end
 
   def test_sync_materializes_declared_repositories
-    with_git_repositories do |root, child, selection|
-      write_selection(
-        selection,
+    with_git_repositories do |root, child, blueprint|
+      write_blueprint(
+        blueprint,
         [repository_declaration(child)]
       )
       manager = manager_with_local_protocol(root)
 
-      report = manager.sync(selection)
+      report = manager.sync(blueprint)
 
       assert_equal "passed", report.fetch("status")
       assert_equal "initialized", report.fetch("repositories").first.fetch("status")
@@ -46,14 +46,14 @@ class NexusComposeRepositoryManagerTest < Minitest::Test
   def test_validate_rejects_a_required_missing_repository
     Dir.mktmpdir("nexus-repository-manager") do |root|
       initialize_git(root)
-      selection = File.join(root, "nexus.yaml")
-      write_selection(
-        selection,
+      blueprint = File.join(root, "nexus.yaml")
+      write_blueprint(
+        blueprint,
         [repository_declaration("https://example.com/system-service.git")]
       )
-      manager = NexusCompose::RepositoryManager.new(NexusCompose::Repository.new(root))
+      manager = NexusAssembler::RepositoryManager.new(NexusAssembler::Repository.new(root))
 
-      error = assert_raises(NexusCompose::ValidationError) { manager.validate(selection) }
+      error = assert_raises(NexusAssembler::ValidationError) { manager.validate(blueprint) }
 
       assert_includes error.message, "no matching entry in .gitmodules"
     end
@@ -62,12 +62,12 @@ class NexusComposeRepositoryManagerTest < Minitest::Test
   def test_validate_allows_an_optional_missing_repository
     Dir.mktmpdir("nexus-repository-manager") do |root|
       initialize_git(root)
-      selection = File.join(root, "nexus.yaml")
+      blueprint = File.join(root, "nexus.yaml")
       declaration = repository_declaration("https://example.com/optional.git").merge("required" => false)
-      write_selection(selection, [declaration])
-      manager = NexusCompose::RepositoryManager.new(NexusCompose::Repository.new(root))
+      write_blueprint(blueprint, [declaration])
+      manager = NexusAssembler::RepositoryManager.new(NexusAssembler::Repository.new(root))
 
-      report = manager.validate(selection)
+      report = manager.validate(blueprint)
 
       assert_equal "passed-with-warnings", report.fetch("status")
       assert_equal "missing", report.fetch("repositories").first.fetch("status")
@@ -75,14 +75,14 @@ class NexusComposeRepositoryManagerTest < Minitest::Test
   end
 
   def test_validate_detects_url_drift
-    with_git_repositories do |root, child, selection|
+    with_git_repositories do |root, child, blueprint|
       manager = manager_with_local_protocol(root)
-      manager.add(selection, name: "system-service", url: child, branch: "main")
-      document = NexusCompose::Data.load_yaml(selection)
+      manager.add(blueprint, name: "system-service", url: child, branch: "main")
+      document = NexusAssembler::Data.load_yaml(blueprint)
       document.fetch("repositories").first["url"] = "https://example.com/other.git"
-      File.write(selection, NexusCompose::Data.yaml(document))
+      File.write(blueprint, NexusAssembler::Data.yaml(document))
 
-      error = assert_raises(NexusCompose::ValidationError) { manager.validate(selection) }
+      error = assert_raises(NexusAssembler::ValidationError) { manager.validate(blueprint) }
 
       assert_includes error.message, "expected \"https://example.com/other.git\""
     end
@@ -100,12 +100,12 @@ class NexusComposeRepositoryManagerTest < Minitest::Test
 
         initialize_git(root)
         FileUtils.mkdir_p(File.join(root, "system"))
-        selection = File.join(root, "nexus.yaml")
-        write_selection(selection, [])
+        blueprint = File.join(root, "nexus.yaml")
+        write_blueprint(blueprint, [])
         git!(root, "add", "nexus.yaml")
         git!(root, "commit", "-m", "Initial parent")
 
-        yield root, child, selection
+        yield root, child, blueprint
       end
     end
   end
@@ -121,9 +121,9 @@ class NexusComposeRepositoryManagerTest < Minitest::Test
       stdout, stderr, status = Open3.capture3(
         "git", "-C", root, "-c", "protocol.file.allow=always", *arguments
       )
-      NexusCompose::GitResult.new(stdout: stdout, stderr: stderr, success?: status.success?)
+      NexusAssembler::GitResult.new(stdout: stdout, stderr: stderr, success?: status.success?)
     end
-    NexusCompose::RepositoryManager.new(NexusCompose::Repository.new(root), runner: runner)
+    NexusAssembler::RepositoryManager.new(NexusAssembler::Repository.new(root), runner: runner)
   end
 
   def repository_declaration(url)
@@ -136,10 +136,10 @@ class NexusComposeRepositoryManagerTest < Minitest::Test
     }
   end
 
-  def write_selection(path, repositories)
+  def write_blueprint(path, repositories)
     File.write(
       path,
-      NexusCompose::Data.yaml(
+      NexusAssembler::Data.yaml(
         "apiVersion" => "nexus.io/composition/v1alpha1",
         "product" => {"name" => "test", "edition" => "custom"},
         "deployment" => {
