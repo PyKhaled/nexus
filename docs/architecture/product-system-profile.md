@@ -36,7 +36,7 @@ Technology names do not replace capability definitions. For example, authenticat
 ## Deployment composition vocabulary
 
 Nexus applies the proposed Engineering OS composition model through a
-declarative selection:
+declarative blueprint:
 
 ```text
 Edition + Environment + Target + Assurance + Capabilities
@@ -45,7 +45,7 @@ Edition + Environment + Target + Assurance + Capabilities
                     Compose mode
                            │
                            ▼
-               Generated deployment package
+                    Deployment package
 ```
 
 - **Edition** defines product-capability defaults, requirements, and
@@ -61,9 +61,9 @@ Edition + Environment + Target + Assurance + Capabilities
 - **Compose mode** is a descriptive name for the resolved combination, not an
   additional selector or independently maintained Compose file.
 
-The compiler produces one generated package containing the resolved Compose
-model, normalized selection, lock data, build plan, secrets contract, policy
-report, and operating summary.
+Nexus Assembler produces one deployment package containing the resolved
+Compose model, normalized blueprint, lock data, build plan, secrets contract,
+policy report, and operating summary.
 
 Lightweight development and full integration development illustrate the
 separation: both may use the same edition, development environment, local
@@ -72,11 +72,11 @@ or engineering-tool capabilities explicitly.
 
 ## Current deployment constraints
 
-- Production selections use prebuilt images and may not contain `build:`.
+- Production blueprints use prebuilt images and may not contain `build:`.
 - Components declare private database and cache services; those services must
   not publish host ports.
-- Hardened and high-assurance selections require immutable images resolved
-  through the selection's private registry and apply the current runtime
+- Hardened and high-assurance blueprints require immutable images resolved
+  through the blueprint's private registry and apply the current runtime
   security checks.
 - Overseer remains development-only because it lacks built-in authentication
   and mounts the Docker socket. Production observability requires a different

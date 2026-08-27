@@ -38,6 +38,23 @@ class NexusComposeCliTest < Minitest::Test
     end
   end
 
+  def test_assemble_uses_blueprint_vocabulary
+    Dir.mktmpdir("nexus-assembler-cli") do |directory|
+      output = StringIO.new
+      errors = StringIO.new
+      destination = File.join(directory, "package")
+      status = run_cli(
+        ["assemble", "--blueprint", development_selection, "--output", destination],
+        output: output, error: errors
+      )
+
+      assert_equal 0, status, errors.string
+      assert File.file?(File.join(destination, "blueprint.yaml"))
+      refute File.exist?(File.join(destination, "selection.yaml"))
+      assert_equal destination, JSON.parse(output.string).fetch("deploymentPackage")
+    end
+  end
+
   def test_compose_is_an_alias_for_generate
     Dir.mktmpdir("nexus-compose-cli") do |directory|
       output = StringIO.new

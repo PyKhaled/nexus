@@ -2,7 +2,7 @@
 
 require "json"
 require "optparse"
-require_relative "compiler"
+require_relative "assembler"
 require_relative "repository_manager"
 
 module NexusCompose
@@ -15,7 +15,7 @@ module NexusCompose
       @error = error
       @repository = repository
       @program_name = program_name
-      @compiler = Compiler.new(repository)
+      @assembler = Assembler.new(repository)
       @repository_manager = repository_manager || RepositoryManager.new(repository)
     end
 
@@ -23,7 +23,8 @@ module NexusCompose
       command = @argv.shift
       case command
       when "plan" then plan
-      when "generate", "compose" then generate(command)
+      when "assemble" then assemble(command)
+      when "generate", "compose" then assemble(command)
       when "validate" then validate
       when "secrets" then secrets
       when "repository", "repo" then repository_command
@@ -46,33 +47,34 @@ module NexusCompose
     def plan
       options = {}
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: #{@program_name} plan --selection FILE"
-        opts.on("--selection FILE", "Composition selection YAML") { |value| options[:selection] = value }
+        opts.banner = "Usage: #{@program_name} plan --blueprint FILE"
+        blueprint_options(opts, options)
       end
       parser.parse!(@argv)
-      require_option!(options, :selection)
+      require_option!(options, :blueprint)
 
-      @output.puts JSON.pretty_generate(Data.canonical(@compiler.plan(options.fetch(:selection))))
+      @output.puts JSON.pretty_generate(Data.canonical(@assembler.plan(options.fetch(:blueprint))))
       0
     end
 
-    def generate(command = "generate")
+    def assemble(command = "assemble")
       options = {force: false}
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: #{@program_name} #{command} --selection FILE --output DIRECTORY [--force]"
-        opts.on("--selection FILE", "Composition selection YAML") { |value| options[:selection] = value }
-        opts.on("--output DIRECTORY", "Generated deployment directory") { |value| options[:output] = value }
-        opts.on("--force", "Replace existing generated files") { options[:force] = true }
+        opts.banner = "Usage: #{@program_name} #{command} --blueprint FILE --output DIRECTORY [--force]"
+        blueprint_options(opts, options)
+        opts.on("--output DIRECTORY", "Deployment package directory") { |value| options[:output] = value }
+        opts.on("--force", "Replace an existing deployment package") { options[:force] = true }
       end
       parser.parse!(@argv)
-      require_option!(options, :selection)
+      require_option!(options, :blueprint)
       require_option!(options, :output)
 
-      @repository_manager.validate(options.fetch(:selection))
-      result = @compiler.compile(options.fetch(:selection))
-      destination = @compiler.write(result, options.fetch(:output), force: options.fetch(:force))
+      @repository_manager.validate(options.fetch(:blueprint))
+      result = @assembler.assemble(options.fetch(:blueprint))
+      destination = @assembler.write_deployment_package(result, options.fetch(:output), force: options.fetch(:force))
       @output.puts JSON.pretty_generate(
         "status" => result.policy_report.fetch("status"),
+        "deploymentPackage" => destination,
         "output" => destination,
         "services" => result.compose.fetch("services").keys.sort,
         "policyReport" => File.join(destination, "policy-report.json")
@@ -99,21 +101,21 @@ module NexusCompose
     def repository_add
       options = {required: true}
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: #{@program_name} repository add NAME URL --selection FILE [--path PATH] [--branch BRANCH] [--optional]"
-        opts.on("--selection FILE", "Composition selection YAML") { |value| options[:selection] = value }
+        opts.banner = "Usage: #{@program_name} repository add NAME URL --blueprint FILE [--path PATH] [--branch BRANCH] [--optional]"
+        blueprint_options(opts, options)
         opts.on("--path PATH", "Checkout path below system/") { |value| options[:path] = value }
         opts.on("--branch BRANCH", "Branch used when adding the submodule") { |value| options[:branch] = value }
         opts.on("--optional", "Do not fail validation when this repository is absent") { options[:required] = false }
       end
       parser.parse!(@argv)
-      require_option!(options, :selection)
+      require_option!(options, :blueprint)
       name = @argv.shift
       url = @argv.shift
       raise ValidationError, parser.banner unless name && url
       raise ValidationError, "unexpected arguments: #{@argv.join(' ')}" unless @argv.empty?
 
       report = @repository_manager.add(
-        options.fetch(:selection),
+        options.fetch(:blueprint),
         name: name,
         url: url,
         path: options[:path],
@@ -125,43 +127,43 @@ module NexusCompose
     end
 
     def repository_list
-      selection, = repository_selection_option("list")
-      @output.puts JSON.pretty_generate("repositories" => Data.canonical(@repository_manager.list(selection)))
+      blueprint, = repository_blueprint_option("list")
+      @output.puts JSON.pretty_generate("repositories" => Data.canonical(@repository_manager.list(blueprint)))
       0
     end
 
     def repository_status
-      selection, = repository_selection_option("status")
-      report = @repository_manager.status(selection)
+      blueprint, = repository_blueprint_option("status")
+      report = @repository_manager.status(blueprint)
       @output.puts JSON.pretty_generate(Data.canonical(report))
       report.fetch("status").start_with?("passed") ? 0 : 3
     end
 
     def repository_sync
-      selection, = repository_selection_option("sync")
-      report = @repository_manager.sync(selection)
+      blueprint, = repository_blueprint_option("sync")
+      report = @repository_manager.sync(blueprint)
       @output.puts JSON.pretty_generate(Data.canonical(report))
       0
     end
 
     def repository_validate
-      selection, = repository_selection_option("validate")
-      report = @repository_manager.validate(selection)
+      blueprint, = repository_blueprint_option("validate")
+      report = @repository_manager.validate(blueprint)
       @output.puts JSON.pretty_generate(Data.canonical(report))
       0
     end
 
-    def repository_selection_option(command)
+    def repository_blueprint_option(command)
       options = {}
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: #{@program_name} repository #{command} --selection FILE"
-        opts.on("--selection FILE", "Composition selection YAML") { |value| options[:selection] = value }
+        opts.banner = "Usage: #{@program_name} repository #{command} --blueprint FILE"
+        blueprint_options(opts, options)
       end
       parser.parse!(@argv)
-      require_option!(options, :selection)
+      require_option!(options, :blueprint)
       raise ValidationError, "unexpected arguments: #{@argv.join(' ')}" unless @argv.empty?
 
-      [options.fetch(:selection), parser]
+      [options.fetch(:blueprint), parser]
     end
 
     def validate
@@ -172,7 +174,7 @@ module NexusCompose
       raise ValidationError, parser.banner unless path
       raise ValidationError, "unexpected arguments: #{@argv.join(' ')}" unless @argv.empty?
 
-      report = @compiler.validate_generated(path)
+      report = @assembler.validate_deployment_package(path)
       @output.puts JSON.pretty_generate(Data.canonical(report))
       0
     end
@@ -180,15 +182,15 @@ module NexusCompose
     def secrets
       options = {}
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: #{@program_name} secrets --selection FILE --output FILE"
-        opts.on("--selection FILE", "Composition selection YAML") { |value| options[:selection] = value }
+        opts.banner = "Usage: #{@program_name} secrets --blueprint FILE --output FILE"
+        blueprint_options(opts, options)
         opts.on("--output FILE", "Merged secrets env file") { |value| options[:output] = value }
       end
       parser.parse!(@argv)
-      require_option!(options, :selection)
+      require_option!(options, :blueprint)
       require_option!(options, :output)
 
-      report = @compiler.collect_secrets(options.fetch(:selection), options.fetch(:output))
+      report = @assembler.collect_secrets(options.fetch(:blueprint), options.fetch(:output))
       @output.puts JSON.pretty_generate(Data.canonical(report))
       if report.fetch("missingRequired").any?
         @error.puts "warning: missing required secrets: #{report.fetch('missingRequired').join(', ')}"
@@ -200,20 +202,26 @@ module NexusCompose
       raise ValidationError, "--#{key} is required" unless options[key]
     end
 
+    def blueprint_options(parser, options)
+      parser.on("--blueprint FILE", "Blueprint YAML") { |value| options[:blueprint] = value }
+      parser.on("--selection FILE", "Legacy alias for --blueprint") { |value| options[:blueprint] = value }
+    end
+
     def help
       <<~HELP
-        Nexus Composition Generator #{VERSION}
+        Nexus Assembler #{VERSION}
 
         Usage: #{@program_name} COMMAND [OPTIONS]
 
         Commands:
-          plan       Resolve a selection without writing generated files
-          compose    Create Compose and its deployment evidence package
-          generate   Create Compose and its deployment evidence package
-          validate   Validate a generated Compose file or directory
-          secrets    Merge selected components' .env files into one secrets file
+          plan       Resolve a blueprint without writing files
+          assemble   Assemble a deployment package from a blueprint
+          validate   Validate a Compose file or deployment package
+          secrets    Merge blueprint components' .env files into one secrets file
           repository Manage source repositories under system/
-          version    Print the generator version
+          compose    Legacy alias for assemble
+          generate   Legacy alias for assemble
+          version    Print the Assembler version
           help       Show this help
       HELP
     end

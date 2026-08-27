@@ -3,7 +3,7 @@ apiVersion: nexus.io/composition/v1alpha1
 product:
   name: nexus
   edition: community
-  description: Self-hosted production reference selection
+  description: Self-hosted production reference blueprint
 
 deployment:
   target: self-hosted

@@ -70,27 +70,27 @@ ok
 
 The root Make targets load `secrets.env` automatically when it exists.
 
-Generate `secrets.env` from the `.env` files of the components selected by
-`composition/examples/nexus-development.yaml` (override with
-`COMPOSITION_SELECTION`):
+Generate `secrets.env` from the `.env` files of the components in the default
+blueprint, `composition/examples/nexus-development.yaml` (override with
+`BLUEPRINT`):
 
 ```sh
 make collect-secrets
 ```
 
-This runs `bin/nexus-compose secrets`, which stops if two files define the
+This runs `bin/nexus secrets --blueprint`, which stops if two files define the
 same key — preventing one service's value from silently replacing another's —
 and warns about any required secret no `.env` file supplies yet. See
 `composition/README.md` for the full command reference.
 
-Selections may also declare independently versioned source repositories below
+Blueprints may also declare independently versioned source repositories below
 `system/`. Repository synchronization is the explicit network step; planning,
 validation, and composition never silently clone or fetch dependencies:
 
 ```sh
-bin/nexus repository sync --selection nexus.yaml
-bin/nexus repository validate --selection nexus.yaml
-bin/nexus compose --selection nexus.yaml --output generated/nexus
+bin/nexus repository sync --blueprint nexus.yaml
+bin/nexus repository validate --blueprint nexus.yaml
+bin/nexus assemble --blueprint nexus.yaml --output generated/nexus
 ```
 
 See the [source repository command reference](composition/README.md#source-repositories)

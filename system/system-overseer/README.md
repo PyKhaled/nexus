@@ -163,6 +163,6 @@ A replacement observability implementation must deliberately migrate:
 | Gap | Risk | Owner | Target or review date |
 | --- | --- | --- | --- |
 | No authenticated production overlay exists yet (see "Production access" above) | The dashboard cannot be safely exposed beyond a trusted local network | Unassigned | None |
-| No `nexus-compose` production/hardened example selects this capability | Prevents the generator from ever producing a policy-passed package that silently exposes an unauthenticated Docker-socket-equivalent surface | Unassigned | None |
+| No production/hardened Nexus Assembler blueprint selects this capability | Prevents the Assembler from producing a policy-passed deployment package that silently exposes an unauthenticated Docker-socket-equivalent surface | Unassigned | None |
 | Docker-socket access is host-wide, not scoped to this Compose project | A vulnerability in Overseer would expose more than Nexus's own containers | Unassigned | None |
 | No incident-response runbook exists for a compromised or exposed socket | Slower response if the socket mount is ever misused | Unassigned | None |

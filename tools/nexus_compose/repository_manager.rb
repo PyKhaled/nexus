@@ -3,7 +3,7 @@
 require "fileutils"
 require "open3"
 require "tempfile"
-require_relative "compiler"
+require_relative "assembler"
 
 module NexusCompose
   GitResult = Struct.new(:stdout, :stderr, :success?, keyword_init: true)
@@ -14,8 +14,8 @@ module NexusCompose
       @runner = runner || method(:run_git)
     end
 
-    def add(selection_path, name:, url:, path: nil, branch: nil, required: true)
-      selection = load_selection(selection_path)
+    def add(blueprint_path, name:, url:, path: nil, branch: nil, required: true)
+      blueprint = load_blueprint(blueprint_path)
       declaration = {
         "name" => name,
         "url" => url,
@@ -23,7 +23,7 @@ module NexusCompose
         "required" => required
       }
       declaration["branch"] = branch if branch
-      declarations = RepositoryDeclarations.validate(Array(selection["repositories"]) + [declaration])
+      declarations = RepositoryDeclarations.validate(Array(blueprint["repositories"]) + [declaration])
 
       ensure_git_repository!
       ensure_path_available!(declaration.fetch("path"))
@@ -32,17 +32,17 @@ module NexusCompose
       arguments.concat(["--", url, declaration.fetch("path")])
       git!(*arguments)
 
-      selection["repositories"] = declarations
-      atomic_write(selection_path, Data.yaml(selection))
+      blueprint["repositories"] = declarations
+      atomic_write(blueprint_path, Data.yaml(blueprint))
       report_for(declaration)
     end
 
-    def list(selection_path)
-      declarations(selection_path).map { |declaration| report_for(declaration) }
+    def list(blueprint_path)
+      declarations(blueprint_path).map { |declaration| report_for(declaration) }
     end
 
-    def status(selection_path)
-      reports = list(selection_path)
+    def status(blueprint_path)
+      reports = list(blueprint_path)
       required_failures = reports.reject do |report|
         !report.fetch("required") || report.fetch("status") == "initialized"
       end
@@ -62,8 +62,8 @@ module NexusCompose
       }
     end
 
-    def validate(selection_path)
-      report = status(selection_path)
+    def validate(blueprint_path)
+      report = status(blueprint_path)
       failures = report.fetch("repositories").select do |repository|
         repository.fetch("required") && repository.fetch("status") != "initialized"
       end
@@ -75,9 +75,9 @@ module NexusCompose
       report
     end
 
-    def sync(selection_path)
+    def sync(blueprint_path)
       ensure_git_repository!
-      declarations(selection_path).each do |declaration|
+      declarations(blueprint_path).each do |declaration|
         entry = gitmodules_by_path[declaration.fetch("path")]
         if entry
           validate_gitmodules_entry!(declaration, entry)
@@ -93,24 +93,24 @@ module NexusCompose
 
       git!("submodule", "sync", "--recursive")
       git!("submodule", "update", "--init", "--recursive")
-      validate(selection_path)
+      validate(blueprint_path)
     end
 
     private
 
-    def declarations(selection_path)
-      selection = load_selection(selection_path)
-      RepositoryDeclarations.validate(selection["repositories"])
+    def declarations(blueprint_path)
+      blueprint = load_blueprint(blueprint_path)
+      RepositoryDeclarations.validate(blueprint["repositories"])
     end
 
-    def load_selection(selection_path)
-      path = File.expand_path(selection_path)
-      raise ValidationError, "selection file not found: #{path}" unless File.file?(path)
+    def load_blueprint(blueprint_path)
+      path = File.expand_path(blueprint_path)
+      raise ValidationError, "blueprint file not found: #{path}" unless File.file?(path)
 
-      selection = Data.load_yaml(path)
-      raise ValidationError, "selection must be a mapping" unless selection.is_a?(Hash)
+      blueprint = Data.load_yaml(path)
+      raise ValidationError, "blueprint must be a mapping" unless blueprint.is_a?(Hash)
 
-      selection
+      blueprint
     end
 
     def report_for(declaration)

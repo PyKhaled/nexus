@@ -9,7 +9,17 @@ class NexusComposeCompilerTest < Minitest::Test
 
   def setup
     @repository = NexusCompose::Repository.new(ROOT)
-    @compiler = NexusCompose::Compiler.new(@repository)
+    @assembler = NexusCompose::Assembler.new(@repository)
+    @compiler = @assembler
+  end
+
+  def test_assembler_exposes_canonical_vocabulary
+    result = @assembler.assemble(example("nexus-development.yaml"))
+
+    assert_equal result.selection, result.blueprint
+    assert result.lock.key?("blueprintDigest")
+    refute result.lock.key?("selectionDigest")
+    assert_equal "nexus-assembler", result.lock.dig("assembler", "name")
   end
 
   def test_development_example_resolves_complete_foundation
@@ -149,7 +159,7 @@ class NexusComposeCompilerTest < Minitest::Test
     Dir.mktmpdir("nexus-compose-test") do |directory|
       destination = File.join(directory, "generated")
       @compiler.write(first, destination)
-      expected = %w[.env.example README.md build-plan.yaml compose.lock.yaml compose.yml policy-report.json runtime secrets.required selection.yaml]
+      expected = %w[.env.example README.md blueprint.yaml build-plan.yaml compose.lock.yaml compose.yml policy-report.json runtime secrets.required]
       assert_equal expected, Dir.children(destination).sort
       written = NexusCompose::Data.load_yaml(File.join(destination, "compose.yml"))
       assert_equal first.compose.fetch("name"), written.fetch("name")
@@ -165,6 +175,21 @@ class NexusComposeCompilerTest < Minitest::Test
       File.write(File.join(directory, "owned.txt"), "preserve")
       assert_raises(NexusCompose::Error) { @compiler.write(result, directory) }
       assert_equal "preserve", File.read(File.join(directory, "owned.txt"))
+    end
+  end
+
+  def test_validation_reads_legacy_selection_package
+    result = @assembler.assemble(example("nexus-development.yaml"))
+    Dir.mktmpdir("nexus-legacy-package") do |directory|
+      destination = File.join(directory, "package")
+      @assembler.write(result, destination)
+      File.rename(File.join(destination, "blueprint.yaml"), File.join(destination, "selection.yaml"))
+      lock_path = File.join(destination, "compose.lock.yaml")
+      lock = NexusCompose::Data.load_yaml(lock_path)
+      lock["selectionDigest"] = lock.delete("blueprintDigest")
+      File.write(lock_path, NexusCompose::Data.yaml(lock))
+
+      assert_equal "passed", @assembler.validate_generated(destination).dig("package", "status")
     end
   end
 
@@ -216,12 +241,12 @@ class NexusComposeCompilerTest < Minitest::Test
     assert_includes error.message, "unknown implementation"
   end
 
-  def test_unknown_selection_fields_are_rejected
+  def test_unknown_blueprint_fields_are_rejected
     selection = selection_hash(edition: "custom", capabilities: {"gateway" => "nginx"})
     selection["profile"] = "production"
 
     error = assert_raises(NexusCompose::ValidationError) { @compiler.compile(selection) }
-    assert_includes error.message, "unknown selection fields"
+    assert_includes error.message, "unknown blueprint fields"
   end
 
   def test_repository_declarations_are_accepted
