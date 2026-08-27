@@ -94,7 +94,7 @@ services:
       - system
 
   website:
-    image: wordpress:latest
+    image: wordpress:7.0-apache
     restart: unless-stopped
     depends_on:
       website-db:
@@ -179,7 +179,7 @@ services:
       - system
 
   overseer:
-    image: ghcr.io/pykhaled/overseer:3.0.0
+    image: ghcr.io/pykhaled/overseer:3.0
     restart: unless-stopped
     environment:
       OVERSEER_COMPOSE_PROJECT: ${OVERSEER_COMPOSE_PROJECT:-nexus-development}

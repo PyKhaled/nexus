@@ -136,6 +136,12 @@ Only `compose.yml` is active and used by the development Make targets. Optional
 TLS, OIDC API authentication, combined secure-development, and standalone stack
 definitions live under `docs/compose/templates/` as documentation examples.
 
+Development container references use patch-floating release-line tags when the
+upstream registry publishes them. Kener and OAuth2 Proxy are exact-patch
+exceptions because their registries publish full release tags and `latest`, but
+no major/minor aliases. Generated production packages replace upstream tags
+with required image digests.
+
 See `docs/compose/README.md` for the mode names, differences, example commands,
 and the additional requirements for staging or production. The examples are
 never loaded automatically.

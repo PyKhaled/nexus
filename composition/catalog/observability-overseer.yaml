@@ -12,7 +12,7 @@ artifacts:
   overseer:
     mode: verified-mirror
     repository: third-party/overseer
-    upstream: ghcr.io/pykhaled/overseer:3.0.0
+    upstream: ghcr.io/pykhaled/overseer:3.0
     digestVariable: OVERSEER_IMAGE_DIGEST
 configuration:
   OVERSEER_DOMAIN:

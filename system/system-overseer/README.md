@@ -6,7 +6,7 @@ Owner: Unassigned
 
 Implementation type: service
 
-Technology: [Overseer](https://github.com/PyKhaled/Overseer), image tag `3.0.0` (release `v3.0.0`)
+Technology: [Overseer](https://github.com/PyKhaled/Overseer), patch-floating image tag `3.0`
 
 ## Capability
 
@@ -103,9 +103,10 @@ curl --header "X-Overseer-CSRF: 1" \
 
 ## Deployment and release
 
-The development composition runs the pinned upstream
-`ghcr.io/pykhaled/overseer:3.0.0` image directly; no image is built from this
-repository. Track upstream releases and re-pin deliberately.
+The development composition runs the patch-floating upstream
+`ghcr.io/pykhaled/overseer:3.0` image directly; no image is built from this
+repository. Patch releases stay within the 3.0 line; review minor or major
+upgrades deliberately.
 
 ## Security and operations
 

@@ -13,7 +13,7 @@ artifacts:
   website:
     mode: verified-mirror
     repository: third-party/wordpress
-    upstream: wordpress:latest
+    upstream: wordpress:7.0-apache
     digestVariable: WORDPRESS_IMAGE_DIGEST
   website-db:
     mode: verified-mirror

@@ -121,10 +121,11 @@ failure.
 ## Deployment and release
 
 The development composition builds no image; `status` runs the pinned upstream
-`ghcr.io/rajnandan1/kener:v4.1.2` image directly. A production deployment
-should resolve and pin an image digest and replace SQLite with a managed
-PostgreSQL database, following the same pattern as the authentication stack's
-database.
+`ghcr.io/rajnandan1/kener:v4.1.2` image directly. Kener does not publish a
+patch-floating `v4.1` image alias, so this is an explicit exact-patch exception.
+A production deployment should resolve and pin an image digest and replace
+SQLite with a managed PostgreSQL database, following the same pattern as the
+authentication stack's database.
 
 ## Security and operations
 

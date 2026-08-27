@@ -1,7 +1,7 @@
 ---
 services:
   website:
-    image: wordpress:latest
+    image: wordpress:7.0-apache
     restart: unless-stopped
     depends_on:
       website-db:

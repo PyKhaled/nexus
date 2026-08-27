@@ -1,4 +1,4 @@
-FROM quay.io/keycloak/keycloak:24.0.1 AS builder
+FROM quay.io/keycloak/keycloak:24.0 AS builder
 
 # Build-time-only flags: these bake into the optimized image and don't vary
 # per environment. Anything that DOES vary (KC_DB_*, KC_HOSTNAME, KC_PROXY*)
@@ -15,7 +15,7 @@ COPY ./theme/ /opt/keycloak/providers/
 
 RUN /opt/keycloak/bin/kc.sh build
 
-FROM quay.io/keycloak/keycloak:24.0.1
+FROM quay.io/keycloak/keycloak:24.0
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
 
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
