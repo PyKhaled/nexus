@@ -33,6 +33,58 @@ The repository also contains a service scaffold, Compose examples, and component
 
 Technology names do not replace capability definitions. For example, authentication is a capability; keycloak is Nexus's current development implementation.
 
+## Deployment composition vocabulary
+
+Nexus applies the proposed Engineering OS composition model through a
+declarative selection:
+
+```text
+Edition + Environment + Target + Assurance + Capabilities
+                           │
+                           ▼
+                    Compose mode
+                           │
+                           ▼
+               Generated deployment package
+```
+
+- **Edition** defines product-capability defaults, requirements, and
+  allow-lists. It answers what the product contains, not where it runs.
+- **Environment** defines lifecycle behavior. Nexus currently implements
+  `development` and `production`; test, preview, and staging are proposed.
+- **Target** defines the execution boundary. Nexus currently implements
+  `local` and `self-hosted`; CI and managed-container targets are proposed.
+- **Assurance** independently tightens security and supply-chain controls
+  through `standard`, `hardened`, or `high-assurance` profiles.
+- **Capabilities** select catalog implementations and supporting operational
+  layers.
+- **Compose mode** is a descriptive name for the resolved combination, not an
+  additional selector or independently maintained Compose file.
+
+The compiler produces one generated package containing the resolved Compose
+model, normalized selection, lock data, build plan, secrets contract, policy
+report, and operating summary.
+
+Lightweight development and full integration development illustrate the
+separation: both may use the same edition, development environment, local
+target, and standard assurance. Full development adds database, cache, mail,
+or engineering-tool capabilities explicitly.
+
+## Current deployment constraints
+
+- Production selections use prebuilt images and may not contain `build:`.
+- Components declare private database and cache services; those services must
+  not publish host ports.
+- Hardened and high-assurance selections require immutable images resolved
+  through the selection's private registry and apply the current runtime
+  security checks.
+- Overseer remains development-only because it lacks built-in authentication
+  and mounts the Docker socket. Production observability requires a different
+  implementation or completed authentication and socket-isolation controls.
+- Test, CI, preview, managed production, full development, and staging are
+  design targets until their schema, catalog metadata, policies, examples, and
+  tests are implemented.
+
 ## Ownership boundaries
 
 - The gateway owns public HTTP entry and route policy.
@@ -57,4 +109,6 @@ defines users, scope, ownership, and acceptance criteria.
 
 The generic concept, reference architecture, proposed standard, policies, and
 review checklist were migrated to Engineering OS as proposed material. They do
-not make Nexus conformant or create organization-level policy.
+not make Nexus conformant or create organization-level policy. Nexus remains
+the product-owned reference implementation and evidence source; Engineering OS
+owns the reusable vocabulary and proposed requirements.

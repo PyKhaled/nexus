@@ -12,12 +12,12 @@ rationale and acceptance gate.
 | Path | Role |
 | --- | --- |
 | `base.compose.yml` | The empty Compose skeleton (name, `system` network, volumes) every selection starts from. |
-| `editions/` | Named capability defaults, requirements, and allow-lists (`community`, `custom`). |
-| `environments/` | Build and restart-policy behavior per environment (`development`, `production`). |
-| `targets/` | Where the composition runs and what that implies for the registry (`local`, `self-hosted`). |
-| `assurance/` | Supply-chain and runtime-security requirements (`standard`, `hardened`, `high-assurance`). |
-| `catalog/` | One `ComponentImplementation` entry per selectable implementation, pointing at its Compose fragment. |
-| `components/` | The Compose fragment each catalog entry merges into the base. |
+| `editions/` | Named product-capability defaults, requirements, and allow-lists (`community`, `custom`). Editions do not encode deployment behavior. |
+| `environments/` | Lifecycle behavior such as build, development-default, secret, and restart rules. The implemented environments are `development` and `production`. |
+| `targets/` | The execution boundary and its registry implications (`local`, `self-hosted`). Environment and target together establish the deployment shape. |
+| `assurance/` | Independent supply-chain and runtime-security requirements (`standard`, `hardened`, `high-assurance`). |
+| `catalog/` | One `ComponentImplementation` entry per selectable implementation, pointing at its reusable Compose fragment. |
+| `components/` | Compose fragments merged into the base. They represent capabilities and operational layers, not complete environment-specific stacks. |
 | `examples/` | Selections the test suite compiles: `nexus-development`, `nexus-self-hosted-production`, `nexus-high-assurance`. |
 
 ## Current capabilities
@@ -41,6 +41,118 @@ mounts the Docker socket, so it must not appear in a composition whose policy
 report can pass without an authenticating overlay in front of it. See
 `system/system-overseer/README.md` for the drafted (not yet implemented)
 production-auth approach.
+
+## Selection and Compose-mode model
+
+Every generated package is resolved from the same selection dimensions:
+
+```text
+Edition + Environment + Target + Assurance + Capabilities
+                           │
+                           ▼
+                    Compose mode
+                           │
+                           ▼
+               Generated deployment package
+```
+
+A **Compose mode** is a useful name for the outcome of a selection. It is not
+another independent compiler dimension and does not require a separately
+maintained, complete Compose file.
+
+| Concept | Question it answers | Nexus representation |
+| --- | --- | --- |
+| Edition | What product capabilities are available, required, or selected by default? | `product.edition` resolved through `editions/` |
+| Environment | How should the composition behave at this lifecycle stage? | `deployment.environment` resolved through `environments/` |
+| Target | Where does the composition run? | `deployment.target` resolved through `targets/` |
+| Assurance | Which security and supply-chain constraints apply? | `deployment.assurance` resolved through `assurance/` |
+| Capabilities and layers | Which implementations and supporting services are included? | `capabilities` resolved through `catalog/` and `components/` |
+| Compose mode | What recognizable deployment outcome did those choices produce? | A descriptive name reported for the resolved selection, not a separate source file |
+| Generated package | What should an operator deploy and validate? | The resolved Compose file, selection, lock, build plan, secrets contract, policy report, and package README |
+
+The division of responsibility is strict:
+
+```text
+Edition      = what the product contains
+Environment  = how it behaves during this lifecycle stage
+Target       = where it runs
+Assurance    = what security constraints apply
+Capabilities = which component implementations are present
+Compose mode = convenient name for the resulting combination
+```
+
+For example, lightweight and full development may use the same edition,
+development environment, local target, and standard assurance profile. Full
+development differs because it explicitly selects additional database, cache,
+mail-sandbox, or engineering-tool capabilities.
+
+### Deployment catalog
+
+The catalog below separates implemented selections from proposed extensions.
+Adding a row to this document does not make that mode compiler-supported.
+
+| Compose mode | Selection interpretation | Additional layers or behavior | Status |
+| --- | --- | --- | --- |
+| Lightweight development | Community edition + development + local + standard | Edition defaults and explicitly required services only; local builds and source mounts are allowed | Implemented by `nexus-development` |
+| Full / integration development | Development + local + assurance choice | Explicit PostgreSQL, Redis, mail sandbox, observability, and engineering tools as needed | Proposed capability combination |
+| Local test | Test + local | Disposable database/cache and a test-runner lifecycle | Proposed environment |
+| CI | Test + CI target | The same disposable integration topology with CI exit and reporting behavior | Proposed target |
+| Preview / PR | Preview + managed or self-hosted target | Prebuilt candidate image, isolated namespace, bounded secrets, disposable data, and expiry | Proposed environment |
+| Managed production | Production + managed-container target | Prebuilt application image with external database, cache, storage, email, and ingress | Proposed target |
+| Self-hosted staging | Staging + self-hosted target | Production-like image and real integrations without source mounts | Proposed environment |
+| Self-hosted production | Community edition + production + self-hosted + hardened or high-assurance | Prebuilt images, gateway/TLS, durable private services, registry and security controls | Implemented by `nexus-self-hosted-production` and `nexus-high-assurance` |
+
+Test, CI, preview, managed-container, and staging remain design targets. Add
+their environment or target definitions only with compiler behavior, example
+selections, policy checks, and tests.
+
+### Optional operational layers
+
+Observability and engineering tools are capabilities, not Compose modes. They
+must be represented as catalog implementations and checked for compatibility
+with the selected environment, target, and assurance profile.
+
+| Layer | Eligibility | Constraints |
+| --- | --- | --- |
+| Database and cache | When an application capability declares a real dependency or an integration test exercises it | PostgreSQL, Redis, and other private services communicate on the Compose network and must not publish host ports, including loopback-only mappings. |
+| Mail sandbox | Development, test, and optionally CI | Must not consume production credentials; UI exposure remains development-scoped. |
+| Observability | Implementation-specific | Overseer is development-only because it lacks built-in authentication and mounts the Docker socket. A future production implementation requires its own catalog entry and security controls. |
+| Engineering/admin tools | Explicit local-development selection by default | Disabled by default, attached to the private network, and never a reason to publish database or Redis ports. Production use would require authentication, authorization, audit, and an explicit exception. |
+| Worker and scheduler | Only when a selected capability declares the dependency | Production roles reuse the same immutable application image and vary command/configuration rather than image lineage. |
+
+Redis, storage emulators, or other supporting services must not be selected
+merely to make a topology look production-like. They belong in a mode only
+when a component declares a dependency or a test actually exercises the
+integration.
+
+### Compiler evolution
+
+The compiler should keep the existing selection sections and resolve all
+fragments before writing one self-contained package. Operators should not need
+to remember an ordered list of post-generation override files.
+
+Future catalog metadata should remain generic rather than branching on names
+such as `overseer` or `wordpress` in `compiler.rb`. Candidate fields include
+environment/target/assurance compatibility, component classification,
+capability dependencies and conflicts, and ephemeral/persistent state
+lifecycle. These names are proposals until the schema and tests implement
+them.
+
+Future required policies should:
+
+- reject components incompatible with the resolved environment, target, or
+  assurance profile;
+- reject unsafe Docker-socket or equivalent host-control mounts outside their
+  explicitly allowed scope;
+- require disposable state for test, CI, and preview by default;
+- require namespace, secret, and cleanup isolation for preview compositions;
+- require authentication, authorization, and audit controls when engineering
+  tools are allowed outside local development.
+
+Existing controls remain authoritative: production forbids `build:` and uses
+prebuilt images; private services publish no host ports; hardened and
+high-assurance selections use immutable images from the selected private
+registry and apply the existing runtime security controls.
 
 ## Commands
 
@@ -105,14 +217,14 @@ See `composition/catalog/authentication-keycloak.yaml` and
 
 | File | Contents |
 | --- | --- |
-| `compose.yml` | The resolved Compose file, equivalent to root `compose.yml` for the `nexus-development` selection. |
-| `selection.yaml` | The normalized selection that produced this package. |
+| `compose.yml` | The fully resolved Compose file, equivalent to root `compose.yml` for the `nexus-development` selection. Optional operational layers are merged here by the compiler rather than applied later by an operator. |
+| `selection.yaml` | The normalized edition, environment, target, assurance, registry, and capability choices that produced this package. |
 | `compose.lock.yaml` | Selection digest, resolved components, and artifact records — what `validate` checks the package against. |
 | `build-plan.yaml` | Per-artifact build/mirror/sign actions and the assurance profile's SBOM/provenance/signature/reproducible-build requirements. |
 | `.env.example` | Every capability's configuration variables, with development defaults or blanks for production. |
 | `secrets.required` | Secret variable names and which capability needs them (names only, never values). |
 | `policy-report.json` | The full policy check/warning output described below. |
-| `README.md` | A generated summary of the selection and how to run it. |
+| `README.md` | A generated summary of the resolved deployment shape, selected layers, policy status, and how to run it. |
 | `runtime/auth.env.example` | Present only when `authentication` is selected — the Keycloak/Postgres runtime environment contract kept out of the main `.env.example`. |
 
 A `production` environment selection additionally copies portable assets
@@ -151,6 +263,9 @@ external secrets, backup, and audit handled outside Compose).
 | `validate` checks the selection digest and locked image references but does not recompile the selection and rerun policy checks against the generated content | A security-relevant Compose edit made after `generate` would not be caught by `validate` (tracked as the core unresolved item in issue #4) | Unassigned | None |
 | No `configure`, `list`, `explain`, or `diff` commands | Selections must be hand-written; there's no interactive builder, catalog browser, or lock-comparison tool | Unassigned | None |
 | `nexus-compose` is a repo-local script, not a packaged/distributable artifact | Can't be installed or version-pinned outside this repository | Unassigned | None |
+| Only `development` and `production` environments and `local` and `self-hosted` targets are implemented | Test, CI, preview, managed-container, and staging are documented outcomes rather than supported selections | Unassigned | None |
+| Catalog entries do not yet declare generic environment/target/assurance compatibility, dependencies, conflicts, or state lifecycle | Optional operational layers could otherwise require capability-name branches or be selected into unsafe deployment shapes | Unassigned | None |
+| Overseer has no production-safe implementation | Enabling it outside development would expose an unauthenticated control surface with Docker socket access | Unassigned | Review only after authenticated access and socket isolation exist |
 
 ## Running the tests
 
