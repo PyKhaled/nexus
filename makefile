@@ -12,11 +12,10 @@ DC = $(COMPOSE) $(SECRETS_ENV_FLAG) -f compose.yml
         auth website status overseer loadbalancer \
         auth-dbshell website-dbshell \
         blueprint-plan assemble deployment-validate assembler-test \
-        composition-plan composition-generate composition-validate composition-test \
         clean prune
 
-BLUEPRINT ?= $(if $(COMPOSITION_SELECTION),$(COMPOSITION_SELECTION),composition/examples/nexus-development.yaml)
-DEPLOYMENT_PACKAGE ?= $(if $(COMPOSITION_OUTPUT),$(COMPOSITION_OUTPUT),generated/nexus-development)
+BLUEPRINT ?= composition/examples/nexus-development.yaml
+DEPLOYMENT_PACKAGE ?= generated/nexus-development
 
 help:
 	@echo ""
@@ -141,15 +140,9 @@ deployment-validate:
 	bin/nexus validate $(DEPLOYMENT_PACKAGE)
 
 assembler-test:
-	ruby tools/nexus_compose/test/compiler_test.rb
-	ruby tools/nexus_compose/test/cli_test.rb
-	ruby tools/nexus_compose/test/repository_manager_test.rb
-
-# Backward-compatible Make aliases.
-composition-plan: blueprint-plan
-composition-generate: assemble
-composition-validate: deployment-validate
-composition-test: assembler-test
+	ruby tools/nexus_assembler/test/assembler_test.rb
+	ruby tools/nexus_assembler/test/cli_test.rb
+	ruby tools/nexus_assembler/test/repository_manager_test.rb
 
 ##########################################
 # Database

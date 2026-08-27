@@ -10,8 +10,8 @@ require "tempfile"
 require "tmpdir"
 require "yaml"
 
-module NexusCompose
-  VERSION = "0.3.0"
+module NexusAssembler
+  VERSION = "0.4.0"
 
   class Error < StandardError; end
   class ValidationError < Error; end
@@ -210,12 +210,7 @@ module NexusCompose
     :policy_report,
     :readme,
     keyword_init: true
-  ) do
-    # Legacy public name retained for API compatibility.
-    def selection
-      blueprint
-    end
-  end
+  )
 
   class Assembler
     attr_reader :repository
@@ -224,21 +219,21 @@ module NexusCompose
       @repository = repository
     end
 
-    def assemble(selection_or_path)
-      selection = selection_or_path.is_a?(String) ? Data.load_yaml(selection_or_path) : Data.canonical(selection_or_path)
-      context = validate_selection(selection)
-      components = resolve_components(selection, context.fetch(:edition))
-      compose = assemble_compose(selection, components)
-      artifacts = apply_deployment_policy!(compose, selection, components, context)
-      environment_example = render_environment_example(selection, components, artifacts, context)
-      runtime_files = render_runtime_files(selection, components)
+    def assemble(blueprint_or_path)
+      blueprint = blueprint_or_path.is_a?(String) ? Data.load_yaml(blueprint_or_path) : Data.canonical(blueprint_or_path)
+      context = validate_blueprint(blueprint)
+      components = resolve_components(blueprint, context.fetch(:edition))
+      compose = assemble_compose(blueprint, components)
+      artifacts = apply_deployment_policy!(compose, blueprint, components, context)
+      environment_example = render_environment_example(blueprint, components, artifacts, context)
+      runtime_files = render_runtime_files(blueprint, components)
       secrets_required = render_secrets_required(components)
-      build_plan = build_plan(selection, components, artifacts, context)
-      lock = lock_file(selection, components, artifacts)
-      policy_report = evaluate_policies(selection, components, compose, artifacts, context)
+      build_plan = build_plan(blueprint, components, artifacts, context)
+      lock = lock_file(blueprint, components, artifacts)
+      policy_report = evaluate_policies(blueprint, components, compose, artifacts, context)
 
       Result.new(
-        blueprint: selection,
+        blueprint: blueprint,
         components: components,
         compose: compose,
         lock: lock,
@@ -247,14 +242,11 @@ module NexusCompose
         runtime_files: runtime_files,
         secrets_required: secrets_required,
         policy_report: policy_report,
-        readme: render_readme(selection, components, policy_report)
+        readme: render_readme(blueprint, components, policy_report)
       )
     end
 
-    # Legacy API verb retained for integrations using the former compiler name.
-    alias compile assemble
-
-    def write(result, output_directory, force: false)
+    def write_deployment_package(result, output_directory, force: false)
       destination = File.expand_path(output_directory)
       if File.exist?(destination) && !File.directory?(destination)
         raise Error, "output path is not a directory: #{destination}"
@@ -284,13 +276,11 @@ module NexusCompose
       destination
     end
 
-    alias write_deployment_package write
-
     def write_package(result, directory, reference_destination)
-      compose = compose_for_output(result.compose, result.selection, reference_destination)
+      compose = compose_for_output(result.compose, result.blueprint, reference_destination)
       files = {
         "compose.yml" => Data.yaml(compose),
-        "blueprint.yaml" => Data.yaml(result.selection),
+        "blueprint.yaml" => Data.yaml(result.blueprint),
         "compose.lock.yaml" => Data.yaml(result.lock),
         "build-plan.yaml" => Data.yaml(result.build_plan),
         ".env.example" => result.environment_example,
@@ -302,7 +292,7 @@ module NexusCompose
       result.runtime_files.each do |name, content|
         atomic_write(File.join(directory, "runtime", name), content)
       end
-      copy_production_assets(directory, result.components) if result.selection.dig("deployment", "environment") == "production"
+      copy_production_assets(directory, result.components) if result.blueprint.dig("deployment", "environment") == "production"
     end
     private :write_package
 
@@ -326,15 +316,13 @@ module NexusCompose
       }
     end
 
-    alias validate_generated validate_deployment_package
-
-    def plan(selection_or_path)
-      result = assemble(selection_or_path)
+    def plan(blueprint_or_path)
+      result = assemble(blueprint_or_path)
       {
-        "product" => result.selection.dig("product", "name"),
-        "edition" => result.selection.dig("product", "edition"),
-        "deployment" => result.selection.fetch("deployment"),
-        "repositories" => RepositoryDeclarations.validate(result.selection["repositories"]),
+        "product" => result.blueprint.dig("product", "name"),
+        "edition" => result.blueprint.dig("product", "edition"),
+        "deployment" => result.blueprint.fetch("deployment"),
+        "repositories" => RepositoryDeclarations.validate(result.blueprint["repositories"]),
         "components" => result.components.map do |component|
           {
             "capability" => component.fetch("capability"),
@@ -347,8 +335,8 @@ module NexusCompose
       }
     end
 
-    def collect_secrets(selection_or_path, output_path)
-      components = assemble(selection_or_path).components
+    def collect_secrets(blueprint_or_path, output_path)
+      components = assemble(blueprint_or_path).components
 
       env_files = components.each_with_object([]) do |component, list|
         Array(component["secretsEnvFiles"]).each do |relative_path|
@@ -395,27 +383,27 @@ module NexusCompose
 
     private
 
-    def validate_selection(selection)
-      raise ValidationError, "blueprint must be a mapping" unless selection.is_a?(Hash)
-      reject_unknown_keys!(selection, %w[apiVersion product deployment registry capabilities repositories], "blueprint")
-      unless selection["apiVersion"] == "nexus.io/composition/v1alpha1"
+    def validate_blueprint(blueprint)
+      raise ValidationError, "blueprint must be a mapping" unless blueprint.is_a?(Hash)
+      reject_unknown_keys!(blueprint, %w[apiVersion product deployment registry capabilities repositories], "blueprint")
+      unless blueprint["apiVersion"] == "nexus.io/composition/v1alpha1"
         raise ValidationError, "apiVersion must be nexus.io/composition/v1alpha1"
       end
 
-      product = selection["product"]
-      deployment = selection["deployment"]
+      product = blueprint["product"]
+      deployment = blueprint["deployment"]
       raise ValidationError, "product must be a mapping" unless product.is_a?(Hash)
       raise ValidationError, "deployment must be a mapping" unless deployment.is_a?(Hash)
-      if selection.key?("registry") && !selection["registry"].is_a?(Hash)
+      if blueprint.key?("registry") && !blueprint["registry"].is_a?(Hash)
         raise ValidationError, "registry must be a mapping"
       end
-      if selection.key?("capabilities") && !selection["capabilities"].is_a?(Hash)
+      if blueprint.key?("capabilities") && !blueprint["capabilities"].is_a?(Hash)
         raise ValidationError, "capabilities must be a mapping"
       end
-      RepositoryDeclarations.validate(selection["repositories"])
+      RepositoryDeclarations.validate(blueprint["repositories"])
       reject_unknown_keys!(product, %w[name edition description], "product")
       reject_unknown_keys!(deployment, %w[target environment assurance], "deployment")
-      reject_unknown_keys!(selection["registry"], %w[host namespace policy], "registry") if selection["registry"].is_a?(Hash)
+      reject_unknown_keys!(blueprint["registry"], %w[host namespace policy], "registry") if blueprint["registry"].is_a?(Hash)
 
       name = product["name"].to_s
       unless name.match?(/\A[a-z][a-z0-9-]{1,62}\z/)
@@ -437,7 +425,7 @@ module NexusCompose
 
       registry_required = assurance.fetch("privateRegistry", "optional").start_with?("required") ||
                           Array(target["registryRequiredIn"]).include?(deployment["environment"])
-      registry = selection["registry"] || {}
+      registry = blueprint["registry"] || {}
       if registry_required && registry["host"].to_s.strip.empty?
         raise ValidationError, "registry.host is required for this target or assurance profile"
       end
@@ -464,9 +452,9 @@ module NexusCompose
       raise ValidationError, "unknown #{label} fields: #{unknown.sort.join(', ')}" unless unknown.empty?
     end
 
-    def resolve_components(selection, edition)
+    def resolve_components(blueprint, edition)
       choices = Data.canonical(edition.fetch("defaults", {}))
-      overrides = selection.fetch("capabilities", {}) || {}
+      overrides = blueprint.fetch("capabilities", {}) || {}
       raise ValidationError, "capabilities must be a mapping" unless overrides.is_a?(Hash)
 
       overrides.each do |capability, value|
@@ -537,22 +525,22 @@ module NexusCompose
       [value.fetch("implementation"), value.fetch("enabled", true)]
     end
 
-    def assemble_compose(selection, components)
+    def assemble_compose(blueprint, components)
       compose = Data.load_yaml(File.join(repository.composition_root, "base.compose.yml"))
       components.each do |component|
         fragment = Data.load_yaml(File.join(repository.root, component.fetch("fragment")))
         compose = Data.deep_merge(compose, fragment)
       end
-      product_name = selection.dig("product", "name")
-      compose["name"] = "#{product_name}-#{selection.dig("deployment", "environment")}"
+      product_name = blueprint.dig("product", "name")
+      compose["name"] = "#{product_name}-#{blueprint.dig("deployment", "environment")}"
       compose.fetch("networks").fetch("system")["name"] = "#{product_name}-system"
       validate_compose_structure(compose)
       compose
     end
 
-    def apply_deployment_policy!(compose, selection, components, context)
-      environment_id = selection.dig("deployment", "environment")
-      assurance_id = selection.dig("deployment", "assurance")
+    def apply_deployment_policy!(compose, blueprint, components, context)
+      environment_id = blueprint.dig("deployment", "environment")
+      assurance_id = blueprint.dig("deployment", "assurance")
       production = environment_id == "production"
       hardened = %w[hardened high-assurance].include?(assurance_id)
       artifacts = []
@@ -572,7 +560,7 @@ module NexusCompose
         if production || hardened
           raise ValidationError, "missing artifact policy for service #{service_name}" unless artifact
           service.delete("build")
-          service["image"] = deployment_image(selection, artifact)
+          service["image"] = deployment_image(blueprint, artifact)
           service["pull_policy"] = "always"
         end
 
@@ -606,8 +594,8 @@ module NexusCompose
       artifacts.sort_by { |artifact| artifact.fetch("service") }
     end
 
-    def deployment_image(selection, artifact)
-      registry = selection.fetch("registry")
+    def deployment_image(blueprint, artifact)
+      registry = blueprint.fetch("registry")
       host = registry.fetch("host").sub(%r{/$}, "")
       namespace = registry.fetch("namespace").gsub(%r{\A/+|/+$}, "")
       repository_name = artifact.fetch("repository")
@@ -653,8 +641,8 @@ module NexusCompose
       }.reject { |_key, value| value.nil? }
     end
 
-    def render_environment_example(selection, components, artifacts, context)
-      development = selection.dig("deployment", "environment") == "development"
+    def render_environment_example(blueprint, components, artifacts, context)
+      development = blueprint.dig("deployment", "environment") == "development"
       lines = [
         "# Generated by Nexus Assembler #{VERSION}; values are examples, never secrets.",
         "# Copy to a private environment file and replace every required value.",
@@ -703,11 +691,11 @@ module NexusCompose
       lines.join("\n")
     end
 
-    def render_runtime_files(selection, components)
+    def render_runtime_files(blueprint, components)
       authentication = components.find { |component| component.fetch("capability") == "authentication" }
       return {} unless authentication
 
-      production = selection.dig("deployment", "environment") == "production"
+      production = blueprint.dig("deployment", "environment") == "production"
       hostname = production ? "" : "auth.localhost"
       lines = [
         "# Generated authentication runtime environment contract.",
@@ -750,14 +738,14 @@ module NexusCompose
       lines.join("\n") + "\n"
     end
 
-    def build_plan(selection, components, artifacts, context)
+    def build_plan(blueprint, components, artifacts, context)
       assurance = context.fetch(:assurance)
       {
         "apiVersion" => "nexus.io/build-plan/v1alpha1",
-        "product" => selection.dig("product", "name"),
-        "environment" => selection.dig("deployment", "environment"),
-        "assurance" => selection.dig("deployment", "assurance"),
-        "registry" => selection["registry"],
+        "product" => blueprint.dig("product", "name"),
+        "environment" => blueprint.dig("deployment", "environment"),
+        "assurance" => blueprint.dig("deployment", "assurance"),
+        "registry" => blueprint["registry"],
         "requirements" => {
           "sbom" => !!assurance["requireSbom"],
           "provenance" => !!assurance["requireProvenance"],
@@ -772,8 +760,8 @@ module NexusCompose
       }
     end
 
-    def lock_file(selection, components, artifacts)
-      blueprint_json = JSON.generate(Data.canonical(selection))
+    def lock_file(blueprint, components, artifacts)
+      blueprint_json = JSON.generate(Data.canonical(blueprint))
       {
         "apiVersion" => "nexus.io/composition-lock/v1alpha1",
         "assembler" => {"name" => "nexus-assembler", "version" => VERSION},
@@ -789,10 +777,10 @@ module NexusCompose
       }
     end
 
-    def evaluate_policies(selection, components, compose, artifacts, context)
-      production = selection.dig("deployment", "environment") == "production"
-      hardened = %w[hardened high-assurance].include?(selection.dig("deployment", "assurance"))
-      registry_host = selection.dig("registry", "host")
+    def evaluate_policies(blueprint, components, compose, artifacts, context)
+      production = blueprint.dig("deployment", "environment") == "production"
+      hardened = %w[hardened high-assurance].include?(blueprint.dig("deployment", "assurance"))
+      registry_host = blueprint.dig("registry", "host")
       services = compose.fetch("services")
       private_services = components.flat_map { |component| Array(component.dig("security", "privateServices")) }.uniq
 
@@ -827,7 +815,7 @@ module NexusCompose
           "message" => "the current gateway image contains a route template for unselected capability #{capability}; requests fail closed with no upstream"
         }
       end
-      if selection.dig("deployment", "assurance") == "high-assurance"
+      if blueprint.dig("deployment", "assurance") == "high-assurance"
         warnings << {
           "id" => "host-controls-outside-compose",
           "message" => "host hardening, signature admission, external secret injection, encrypted backup, and external audit require deployment-platform enforcement"
@@ -838,8 +826,8 @@ module NexusCompose
       {
         "apiVersion" => "nexus.io/policy-report/v1alpha1",
         "status" => failures.empty? ? "passed" : "failed",
-        "product" => selection.dig("product", "name"),
-        "deployment" => selection.fetch("deployment"),
+        "product" => blueprint.dig("product", "name"),
+        "deployment" => blueprint.fetch("deployment"),
         "checks" => checks,
         "warnings" => warnings,
         "failures" => failures.map { |failure| failure.fetch("id") }
@@ -855,9 +843,9 @@ module NexusCompose
       }
     end
 
-    def render_readme(selection, components, policy_report)
-      product = selection.dig("product", "name")
-      deployment = selection.fetch("deployment")
+    def render_readme(blueprint, components, policy_report)
+      product = blueprint.dig("product", "name")
+      deployment = blueprint.fetch("deployment")
       capability_lines = components.map do |component|
         "- `#{component['capability']}` using `#{component['implementation']}`"
       end.join("\n")
@@ -876,7 +864,7 @@ module NexusCompose
 
         ## Blueprint
 
-        - Edition: `#{selection.dig('product', 'edition')}`
+        - Edition: `#{blueprint.dig('product', 'edition')}`
         - Target: `#{deployment['target']}`
         - Environment: `#{deployment['environment']}`
         - Assurance: `#{deployment['assurance']}`
@@ -958,9 +946,9 @@ module NexusCompose
       end
     end
 
-    def compose_for_output(compose, selection, destination)
+    def compose_for_output(compose, blueprint, destination)
       output = Marshal.load(Marshal.dump(compose))
-      return output unless selection.dig("deployment", "environment") == "development"
+      return output unless blueprint.dig("deployment", "environment") == "development"
 
       output.fetch("services").each_value do |service|
         if service["build"].is_a?(Hash) && service["build"]["context"].is_a?(String)
@@ -1043,17 +1031,15 @@ module NexusCompose
       missing = required.reject { |name| File.file?(File.join(directory, name)) }
       raise ValidationError, "deployment package is missing: #{missing.join(', ')}" unless missing.empty?
 
-      blueprint_path = ["blueprint.yaml", "selection.yaml"]
-        .map { |name| File.join(directory, name) }
-        .find { |candidate| File.file?(candidate) }
-      raise ValidationError, "deployment package is missing: blueprint.yaml" unless blueprint_path
+      blueprint_path = File.join(directory, "blueprint.yaml")
+      raise ValidationError, "deployment package is missing: blueprint.yaml" unless File.file?(blueprint_path)
 
       blueprint = Data.load_yaml(blueprint_path)
       lock = Data.load_yaml(File.join(directory, "compose.lock.yaml"))
       policy = JSON.parse(File.read(File.join(directory, "policy-report.json")))
       compose = Data.load_yaml(File.join(directory, "compose.yml"))
       expected_digest = "sha256:#{Digest::SHA256.hexdigest(JSON.generate(Data.canonical(blueprint)))}"
-      locked_digest = lock["blueprintDigest"] || lock["selectionDigest"]
+      locked_digest = lock["blueprintDigest"]
       unless locked_digest == expected_digest
         raise ValidationError, "blueprint digest does not match compose.lock.yaml"
       end
@@ -1078,8 +1064,8 @@ module NexusCompose
       docker = system("docker", "compose", "version", out: File::NULL, err: File::NULL)
       return {"status" => "skipped", "reason" => "docker compose is unavailable"} unless docker
 
-      runtime_environment = Tempfile.new(["nexus-compose-runtime", ".env"])
-      interpolation_environment = Tempfile.new(["nexus-compose-validation", ".env"])
+      runtime_environment = Tempfile.new(["nexus-assembler-runtime", ".env"])
+      interpolation_environment = Tempfile.new(["nexus-assembler-validation", ".env"])
       begin
         runtime_environment.write("NEXUS_VALIDATION=1\n")
         runtime_environment.flush
@@ -1089,7 +1075,7 @@ module NexusCompose
                   elsif name.end_with?("_IMAGE_DIGEST")
                     "sha256:#{'a' * 64}"
                   elsif name.end_with?("_DIR")
-                    "/tmp/nexus-compose-validation"
+                    "/tmp/nexus-assembler-validation"
                   elsif name.end_with?("_PORT")
                     "8080"
                   else
@@ -1133,6 +1119,4 @@ module NexusCompose
     end
   end
 
-  # Backward-compatible API name for integrations that still instantiate Compiler.
-  Compiler = Assembler
 end

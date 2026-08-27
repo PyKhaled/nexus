@@ -1,7 +1,7 @@
 # Nexus Assembler Data
 
 This directory contains the catalog and policy data read by the **Nexus
-Assembler** ([`tools/nexus_compose/assembler.rb`](../tools/nexus_compose/assembler.rb)).
+Assembler** ([`tools/nexus_assembler/assembler.rb`](../tools/nexus_assembler/assembler.rb)).
 The Assembler turns a declarative **blueprint** into a **deployment package**;
 [`bin/nexus`](../bin/nexus) is its command line. See
 [issue #4](https://github.com/PyKhaled/Nexus/issues/4) for the feature
@@ -40,7 +40,7 @@ rationale and acceptance gate.
 
 These match the services in the root [`compose.yml`](../compose.yml) exactly;
 `nexus-development.yaml` is assembled and compared against it in
-[`compiler_test.rb`](../tools/nexus_compose/test/compiler_test.rb).
+[`assembler_test.rb`](../tools/nexus_assembler/test/assembler_test.rb).
 
 `observability` is selected in `nexus-development.yaml` only. It is
 deliberately **absent** from `nexus-self-hosted-production.yaml` and
@@ -140,7 +140,7 @@ fragments before writing one self-contained deployment package. Operators
 should not need to remember an ordered list of post-assembly override files.
 
 Future catalog metadata should remain generic rather than branching on names
-such as `overseer` or `wordpress` in `compiler.rb`. Candidate fields include
+such as `overseer` or `wordpress` in `assembler.rb`. Candidate fields include
 environment/target/assurance compatibility, component classification,
 capability dependencies and conflicts, and ephemeral/persistent state
 lifecycle. These names are proposals until the schema and tests implement
@@ -176,9 +176,6 @@ a blueprint like
 | `bin/nexus assemble --blueprint FILE --output DIR [--force]` | Assemble a full deployment package in `DIR`. Before writing, validates every required source repository declared by the blueprint. |
 | `bin/nexus validate PATH` | Validate a Compose file or deployment package: structure, the blueprint-digest/locked-image match, and (when Docker is available) `docker compose config`. |
 | `bin/nexus secrets --blueprint FILE --output FILE` | Merge the `.env` files of the blueprint's components into one secrets file. Refuses duplicate keys and warns about declared secrets that no `.env` file supplies. |
-
-The legacy `bin/nexus-compose` entry point, `compose`/`generate` commands, and
-`--selection` option remain compatibility aliases during the migration.
 
 ### Source repositories
 
@@ -241,7 +238,7 @@ make collect-secrets
 ## Catalog schema: `production` and `secretsEnvFiles`
 
 Two catalog fields are read declaratively by the Assembler rather than being
-special-cased by capability name — this is what keeps `compiler.rb` from
+special-cased by capability name — this is what keeps `assembler.rb` from
 needing to know that "website" or "keycloak" exist:
 
 - `secretsEnvFiles: [path, ...]` — repo-relative paths to this component's own
@@ -324,6 +321,6 @@ external secrets, backup, and audit handled outside Compose).
 ## Running the tests
 
 ```sh
-ruby tools/nexus_compose/test/compiler_test.rb
-ruby tools/nexus_compose/test/cli_test.rb
+ruby tools/nexus_assembler/test/assembler_test.rb
+ruby tools/nexus_assembler/test/cli_test.rb
 ```

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "../tools/nexus_compose/cli"
+require_relative "../tools/nexus_assembler/cli"
 
-exit NexusCompose::CLI.new(ARGV, program_name: "nexus").run
+exit NexusAssembler::CLI.new(ARGV, program_name: "nexus").run
