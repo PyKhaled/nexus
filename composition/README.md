@@ -165,9 +165,56 @@ Every command accepts a selection like
 | Command | Purpose |
 | --- | --- |
 | `bin/nexus-compose plan --selection FILE` | Resolve a selection and print the components, artifacts, and policy status as JSON, without writing anything. |
+| `bin/nexus compose --selection FILE --output DIR [--force]` | Preferred spelling of `generate` through the new `nexus` entry point. Before writing, validates every required source repository declared by the selection. |
 | `bin/nexus-compose generate --selection FILE --output DIR [--force]` | Compile the selection and write a full deployment package to `DIR`. Refuses to replace a non-empty directory unless `--force` is given. |
 | `bin/nexus-compose validate PATH` | Validate a generated `compose.yml` or package directory: structure, the selection-digest/locked-image match, and (when Docker is available) `docker compose config`. |
 | `bin/nexus-compose secrets --selection FILE --output FILE` | Merge the `.env` files of the selection's components into one secrets file. Refuses to write on a duplicate key across files, and warns (without failing) about any of the components' declared `secrets:` names that no `.env` file supplies. |
+
+Both `bin/nexus` and the backward-compatible `bin/nexus-compose` entry point
+use the same implementation. `compose` is an alias for `generate`.
+
+### Source repositories
+
+A selection may declare source repositories that must be checked out as Git
+submodules below `system/`:
+
+```yaml
+repositories:
+  - name: system-service
+    url: git@github.com:example/system-service.git
+    path: system/system-service
+    branch: main
+    required: true
+```
+
+Repository names and paths must be unique. Paths must be normalized relative
+paths below `system/`; absolute paths and `..` traversal are rejected. `required`
+defaults to `true`. `branch` controls `git submodule add`, while the parent
+repository's Gitlink remains the reproducible record of the exact child commit.
+
+| Command | Purpose |
+| --- | --- |
+| `bin/nexus repository add NAME URL --selection FILE [--path PATH] [--branch BRANCH] [--optional]` | Add the declaration, create/update `.gitmodules` through Git, and clone the submodule. The default path is `system/NAME`. |
+| `bin/nexus repository list --selection FILE` | Print declarations together with their local state as JSON. |
+| `bin/nexus repository status --selection FILE` | Return exit code `3` when a required repository is unavailable or inconsistent. Optional missing repositories are warnings. |
+| `bin/nexus repository sync --selection FILE` | Add missing declared submodules, run recursive Git submodule sync, and initialize their recorded commits. This is the only repository command that may clone several repositories. |
+| `bin/nexus repository validate --selection FILE` | Locally compare the selection, `.gitmodules`, parent Gitlinks, and checked-out commits without network access. |
+
+`plan`, `validate`, and repository validation never clone or fetch. `compose`
+also remains network-free: it fails when a required repository has not already
+been initialized. A pipeline can therefore use an explicit checkout phase:
+
+```sh
+git clone --recurse-submodules "$NEXUS_REPOSITORY"
+bin/nexus repository validate --selection nexus.yaml
+bin/nexus compose --selection nexus.yaml --output dist/nexus
+```
+
+The repository currently contains only a commented `.gitmodules` example, and
+`system/system-service` remains an ordinary tracked directory. With a matching
+declaration the CLI reports the module as missing; if the template is merely
+uncommented, it reports `not-a-submodule` because no Gitlink exists. Repository
+commands never remove or convert existing content implicitly.
 
 The equivalent Make targets default to `composition/examples/nexus-development.yaml`
 and `generated/nexus-development` (override with `COMPOSITION_SELECTION` /

@@ -142,6 +142,7 @@ composition-validate:
 composition-test:
 	ruby tools/nexus_compose/test/compiler_test.rb
 	ruby tools/nexus_compose/test/cli_test.rb
+	ruby tools/nexus_compose/test/repository_manager_test.rb
 
 ##########################################
 # Database

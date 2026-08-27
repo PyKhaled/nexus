@@ -224,6 +224,48 @@ class NexusComposeCompilerTest < Minitest::Test
     assert_includes error.message, "unknown selection fields"
   end
 
+  def test_repository_declarations_are_accepted
+    selection = selection_hash(edition: "custom", capabilities: {"gateway" => "nginx"})
+    selection["repositories"] = [
+      {
+        "name" => "system-service",
+        "url" => "git@github.com:example/system-service.git",
+        "path" => "system/system-service",
+        "branch" => "main",
+        "required" => true
+      }
+    ]
+
+    result = @compiler.compile(selection)
+
+    assert_equal "system/system-service", result.selection.fetch("repositories").first.fetch("path")
+    plan = @compiler.plan(selection)
+    assert_equal "system-service", plan.fetch("repositories").first.fetch("name")
+  end
+
+  def test_repository_paths_must_be_below_system
+    selection = selection_hash(edition: "custom", capabilities: {"gateway" => "nginx"})
+    selection["repositories"] = [
+      {"name" => "escape", "url" => "https://example.com/escape.git", "path" => "../escape"}
+    ]
+
+    error = assert_raises(NexusCompose::ValidationError) { @compiler.compile(selection) }
+
+    assert_includes error.message, "below system/"
+  end
+
+  def test_duplicate_repository_paths_are_rejected
+    selection = selection_hash(edition: "custom", capabilities: {"gateway" => "nginx"})
+    selection["repositories"] = [
+      {"name" => "one", "url" => "https://example.com/one.git", "path" => "system/shared"},
+      {"name" => "two", "url" => "https://example.com/two.git", "path" => "system/shared"}
+    ]
+
+    error = assert_raises(NexusCompose::ValidationError) { @compiler.compile(selection) }
+
+    assert_includes error.message, "duplicate repository paths"
+  end
+
   def test_collect_secrets_merges_selected_components_env_files
     with_website_env_content("MYSQL_PASSWORD=test-value\n", "MYSQL_ROOT_PASSWORD=test-root-value\n") do
       Dir.mktmpdir("nexus-compose-secrets") do |directory|

@@ -38,6 +38,57 @@ class NexusComposeCliTest < Minitest::Test
     end
   end
 
+  def test_compose_is_an_alias_for_generate
+    Dir.mktmpdir("nexus-compose-cli") do |directory|
+      output = StringIO.new
+      errors = StringIO.new
+      status = run_cli(
+        ["compose", "--selection", development_selection, "--output", File.join(directory, "out")],
+        output: output, error: errors
+      )
+
+      assert_equal 0, status, errors.string
+      assert File.file?(File.join(directory, "out", "compose.yml"))
+    end
+  end
+
+  def test_repository_list_with_no_declarations
+    output = StringIO.new
+    status = run_cli(
+      ["repository", "list", "--selection", development_selection],
+      output: output
+    )
+
+    assert_equal 0, status
+    assert_equal [], JSON.parse(output.string).fetch("repositories")
+  end
+
+  def test_compose_rejects_a_missing_required_repository
+    Dir.mktmpdir("nexus-compose-cli") do |directory|
+      selection = NexusCompose::Data.load_yaml(development_selection)
+      selection["repositories"] = [
+        {
+          "name" => "missing-service",
+          "url" => "https://example.com/missing-service.git",
+          "path" => "system/missing-service",
+          "required" => true
+        }
+      ]
+      selection_path = File.join(directory, "selection.yaml")
+      File.write(selection_path, NexusCompose::Data.yaml(selection))
+      errors = StringIO.new
+
+      status = run_cli(
+        ["compose", "--selection", selection_path, "--output", File.join(directory, "out")],
+        error: errors
+      )
+
+      assert_equal 2, status
+      assert_includes errors.string, "repository validation failed"
+      refute File.exist?(File.join(directory, "out"))
+    end
+  end
+
   def test_generate_refuses_to_replace_without_force
     Dir.mktmpdir("nexus-compose-cli") do |directory|
       destination = File.join(directory, "out")

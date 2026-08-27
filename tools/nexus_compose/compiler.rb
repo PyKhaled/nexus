@@ -11,7 +11,7 @@ require "tmpdir"
 require "yaml"
 
 module NexusCompose
-  VERSION = "0.1.0"
+  VERSION = "0.2.0"
 
   class Error < StandardError; end
   class ValidationError < Error; end
@@ -80,6 +80,68 @@ module NexusCompose
                     end
       block.call(transformed)
     end
+  end
+
+  module RepositoryDeclarations
+    ALLOWED_FIELDS = %w[name url path branch required].freeze
+
+    module_function
+
+    def validate(value)
+      return [] if value.nil?
+      raise ValidationError, "repositories must be a list" unless value.is_a?(Array)
+
+      repositories = value.map.with_index do |candidate, index|
+        label = "repositories[#{index}]"
+        raise ValidationError, "#{label} must be a mapping" unless candidate.is_a?(Hash)
+
+        repository = Data.canonical(candidate)
+        unknown = repository.keys - ALLOWED_FIELDS
+        unless unknown.empty?
+          raise ValidationError, "unknown #{label} fields: #{unknown.sort.join(', ')}"
+        end
+
+        name = repository["name"].to_s
+        unless name.match?(/\A[a-z][a-z0-9-]{0,62}\z/)
+          raise ValidationError, "#{label}.name must be a lowercase DNS-style name"
+        end
+
+        url = repository["url"].to_s.strip
+        raise ValidationError, "#{label}.url is required" if url.empty?
+
+        path = repository["path"].to_s
+        clean_path = Pathname.new(path).cleanpath.to_s
+        unless path == clean_path && !Pathname.new(path).absolute? && path.start_with?("system/") && path != "system/"
+          raise ValidationError, "#{label}.path must be a normalized relative path below system/"
+        end
+
+        if repository.key?("branch") && repository["branch"].to_s.strip.empty?
+          raise ValidationError, "#{label}.branch must not be empty"
+        end
+        if repository.key?("required") && ![true, false].include?(repository["required"])
+          raise ValidationError, "#{label}.required must be true or false"
+        end
+
+        repository.merge(
+          "name" => name,
+          "url" => url,
+          "path" => path,
+          "required" => repository.fetch("required", true)
+        )
+      end
+
+      duplicate_names = duplicates(repositories.map { |repository| repository.fetch("name") })
+      duplicate_paths = duplicates(repositories.map { |repository| repository.fetch("path") })
+      raise ValidationError, "duplicate repository names: #{duplicate_names.join(', ')}" unless duplicate_names.empty?
+      raise ValidationError, "duplicate repository paths: #{duplicate_paths.join(', ')}" unless duplicate_paths.empty?
+
+      repositories
+    end
+
+    def duplicates(values)
+      values.group_by(&:itself).select { |_value, matches| matches.length > 1 }.keys.sort
+    end
+    private_class_method :duplicates
   end
 
   class Repository
@@ -260,6 +322,7 @@ module NexusCompose
         "product" => result.selection.dig("product", "name"),
         "edition" => result.selection.dig("product", "edition"),
         "deployment" => result.selection.fetch("deployment"),
+        "repositories" => RepositoryDeclarations.validate(result.selection["repositories"]),
         "components" => result.components.map do |component|
           {
             "capability" => component.fetch("capability"),
@@ -322,7 +385,7 @@ module NexusCompose
 
     def validate_selection(selection)
       raise ValidationError, "selection must be a mapping" unless selection.is_a?(Hash)
-      reject_unknown_keys!(selection, %w[apiVersion product deployment registry capabilities], "selection")
+      reject_unknown_keys!(selection, %w[apiVersion product deployment registry capabilities repositories], "selection")
       unless selection["apiVersion"] == "nexus.io/composition/v1alpha1"
         raise ValidationError, "apiVersion must be nexus.io/composition/v1alpha1"
       end
@@ -337,6 +400,7 @@ module NexusCompose
       if selection.key?("capabilities") && !selection["capabilities"].is_a?(Hash)
         raise ValidationError, "capabilities must be a mapping"
       end
+      RepositoryDeclarations.validate(selection["repositories"])
       reject_unknown_keys!(product, %w[name edition description], "product")
       reject_unknown_keys!(deployment, %w[target environment assurance], "deployment")
       reject_unknown_keys!(selection["registry"], %w[host namespace policy], "registry") if selection["registry"].is_a?(Hash)

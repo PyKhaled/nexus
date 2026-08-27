@@ -83,6 +83,19 @@ same key â€” preventing one service's value from silently replacing another's â€
 and warns about any required secret no `.env` file supplies yet. See
 `composition/README.md` for the full command reference.
 
+Selections may also declare independently versioned source repositories below
+`system/`. Repository synchronization is the explicit network step; planning,
+validation, and composition never silently clone or fetch dependencies:
+
+```sh
+bin/nexus repository sync --selection nexus.yaml
+bin/nexus repository validate --selection nexus.yaml
+bin/nexus compose --selection nexus.yaml --output generated/nexus
+```
+
+See the [source repository command reference](composition/README.md#source-repositories)
+for the declaration schema and pipeline behavior.
+
 Then rebuild and start the environment:
 
 ```sh
