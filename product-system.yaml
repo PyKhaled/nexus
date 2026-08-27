@@ -58,7 +58,7 @@ capabilities:
     private_dependencies:
       - website-db
     public_interfaces:
-      - http://app.localhost
+      - http://localhost/
     replaceable: true
     owner: unassigned
 

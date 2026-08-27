@@ -22,7 +22,7 @@ time, so the gateway can start before its upstream applications.
 
 | URL | Default Docker upstream |
 | --- | --- |
-| `http://app.localhost` | `website:80` |
+| `http://localhost/` | `website:80` |
 | `http://auth.localhost` | `keycloak:8080` |
 | `http://status.localhost` | `status:3000` |
 | `http://overseer.localhost` | `overseer:8765` |

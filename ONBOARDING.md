@@ -40,7 +40,7 @@ file is required — every service has a working development default.
 
 | Route | Backs onto |
 | --- | --- |
-| `http://app.localhost` | WordPress |
+| `http://localhost/` | WordPress |
 | `http://auth.localhost` | Keycloak |
 | `http://status.localhost` | Kener (service status page) |
 | `http://overseer.localhost` | Overseer (Compose observability/control — **unauthenticated by design**, trusted-network only) |

@@ -20,6 +20,9 @@ class NexusComposeCompilerTest < Minitest::Test
     assert_equal %w[gateway keycloak keycloak-db overseer status status-redis website website-db],
                  result.compose.fetch("services").keys.sort
     assert result.compose.dig("services", "gateway").key?("build")
+    assert_equal "${APP_DOMAIN:-localhost}", result.compose.dig("services", "gateway", "environment", "APP_DOMAIN")
+    assert_includes result.compose.dig("services", "gateway", "networks", "system", "aliases"),
+                    "${APP_DOMAIN:-localhost}"
     assert result.lock.fetch("artifacts").none? { |artifact| artifact.fetch("digestResolved") }
     result.compose.fetch("services").each_value do |service|
       next unless service.dig("healthcheck", "test")
@@ -27,6 +30,21 @@ class NexusComposeCompilerTest < Minitest::Test
       assert service.dig("healthcheck", "test").all? { |item| item.is_a?(String) }
     end
     assert_equal "passed", result.policy_report.fetch("status")
+  end
+
+  def test_primary_website_route_preserves_gateway_health_endpoints
+    default_route = File.join(ROOT, "system/system-gateway/conf.d/default.conf")
+    http_route = File.read(File.join(ROOT, "system/system-gateway/templates/10-app.conf.template"))
+    tls_route = File.read(File.join(ROOT, "system/system-gateway/templates-tls/11-app-tls.conf.template"))
+
+    assert File.file?(default_route), "Nexus must replace the base NGINX image's localhost default vhost"
+    [http_route, tls_route].each do |route|
+      assert_includes route, "server_name ${APP_DOMAIN};"
+      assert_includes route, "location = /healthz {"
+      assert_includes route, "location = /readyz {"
+      assert_includes route, "location / {"
+      assert_includes route, "proxy_pass http://$gateway_app_upstream;"
+    end
   end
 
   def test_development_example_matches_reviewed_root_compose

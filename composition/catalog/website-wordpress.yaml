@@ -23,7 +23,7 @@ artifacts:
 configuration:
   APP_DOMAIN:
     description: Public website hostname
-    developmentDefault: app.localhost
+    developmentDefault: localhost
     productionRequired: true
   MYSQL_DATABASE:
     description: WordPress database name

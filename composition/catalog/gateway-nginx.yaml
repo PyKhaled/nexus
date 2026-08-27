@@ -16,7 +16,7 @@ artifacts:
 configuration:
   APP_DOMAIN:
     description: Public website hostname
-    developmentDefault: app.localhost
+    developmentDefault: localhost
     productionRequired: false
   AUTH_DOMAIN:
     description: Public authentication hostname

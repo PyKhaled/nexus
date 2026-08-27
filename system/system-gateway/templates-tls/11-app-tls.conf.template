@@ -7,6 +7,18 @@ server {
     ssl_certificate_key ${TLS_CERTIFICATE_KEY};
     include /etc/nginx/snippets/tls.conf;
 
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location = /readyz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ready\n";
+    }
+
     location / {
         set $gateway_app_upstream "${APP_UPSTREAM}";
 

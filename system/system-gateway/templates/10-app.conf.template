@@ -7,6 +7,18 @@ server {
         return 301 https://$host$request_uri;
     }
 
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location = /readyz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ready\n";
+    }
+
     location / {
         set $gateway_app_upstream "${APP_UPSTREAM}";
 

@@ -27,7 +27,7 @@ browser / API client
         v
 Nexus System Gateway (NGINX :80)
         |
-        +-- app.localhost      --> website:80
+        +-- localhost/         --> website:80
         +-- auth.localhost     --> keycloak:8080
         +-- status.localhost   --> status:3000
         +-- overseer.localhost --> overseer:8765
@@ -115,7 +115,7 @@ optional; place them in `system/system-auth/providers/` or
 <!-- | Endpoint | URL |
 | --- | --- |
 | Gateway health | `http://localhost/healthz` |
-| Website | `http://app.localhost` |
+| Website | `http://localhost/` |
 | Authentication | `http://auth.localhost` |
 | API | `http://api.localhost` | -->
 
