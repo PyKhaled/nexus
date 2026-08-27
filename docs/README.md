@@ -16,6 +16,12 @@ Issues and pull requests until they merge.
 - [Runbook template](runbooks/Runbook-Template.md) — repository-local procedure scaffold.
 - [ADR template](decisions/ADR-Template.md) — architecture decision scaffold.
 
+## Project evidence
+
+- [Project Takeover](project/takeover/README.md) — evidence register, dated
+  Engineering Baseline, migration ledger, and assurance plan for the current
+  Nexus takeover review.
+
 ## Component documentation
 
 - [Component README template](templates/component-readme.md) — capability, ownership, interfaces, data, configuration, lifecycle, and operations.
