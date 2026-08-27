@@ -8,10 +8,10 @@ identity:
 
 composition:
   local_entrypoint: compose.yml
-  generator: bin/nexus-compose
+  assembler: bin/nexus
   catalog: composition/catalog
-  default_selection: composition/examples/nexus-development.yaml
-  generated_output: generated
+  default_blueprint: composition/examples/nexus-development.yaml
+  deployment_packages: generated
   project_name: nexus
   public_entrypoint: gateway
   network: nexus-system

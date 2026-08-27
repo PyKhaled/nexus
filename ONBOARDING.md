@@ -23,7 +23,7 @@ trying to become.
 ## Prerequisites
 
 - Docker and Docker Compose v2 (`docker compose version`)
-- Ruby (any recent 3.x) — only needed for the `nexus-compose` tooling under
+- Ruby (any recent 3.x) — only needed for Nexus Assembler under
   `tools/nexus_compose/` and its tests, not for running the stack itself
 
 ## Quick start
@@ -50,7 +50,7 @@ Start one part of the stack instead of everything with `make website`,
 `make auth`, `make status`, `make overseer`, or `make gateway` — each starts
 the gateway first, then attaches its own service(s) to `nexus-system`. Run
 `make help` for the full command list, including database shells and the
-`nexus-compose` targets described below.
+Assembler targets described below.
 
 ## Repository map
 
@@ -59,10 +59,10 @@ the gateway first, then attaches its own service(s) to `nexus-system`. Run
 | `compose.yml` | The one active Compose definition. Source of truth for local development; every `make` target reads it. |
 | `makefile` | Every supported operation — stack lifecycle, gateway operations, database shells, composition tooling. Start here before running a raw `docker compose` command by hand. |
 | `system/` | One directory per deployable service or stack (`system-gateway`, `system-auth` + `system-auth-db`, `system-website` + `system-website-db`, `system-status`, `system-overseer`, and the non-runnable `system-service` scaffold). Each owns its own README, config, and `docs/runbooks/`. |
-| `composition/` + `tools/nexus_compose/` + `bin/nexus-compose` | A separate generator that can compile a declarative selection (edition/environment/target/assurance/capabilities) into a Compose deployment package. Not wired into the default workflow — `compose.yml` stays hand-maintained and the generator is kept in sync with it by tests. See `composition/README.md`. |
+| `composition/` + `tools/nexus_compose/` + `bin/nexus` | Nexus Assembler turns a declarative blueprint (edition/environment/target/assurance/capabilities) into a Compose deployment package. Not wired into the default workflow — `compose.yml` stays hand-maintained and the Assembler is kept in sync with it by tests. See `composition/README.md`. |
 | `docs/` | Canonical documentation index (`docs/README.md`), architecture decisions, Compose mode reference, runbook index, and reusable templates (component README, runbook, ADR). |
 | `product-system.yaml` | The declarative product-capability model referenced above. |
-| `bin/nexus-compose secrets` | Merges the selected components' `.env` files into root `secrets.env`; `make collect-secrets` runs it, and other root Make targets load the result automatically when present. |
+| `bin/nexus secrets --blueprint FILE` | Merges the blueprint components' `.env` files into root `secrets.env`; `make collect-secrets` runs it, and other root Make targets load the result automatically when present. |
 
 ## The mental model
 
@@ -89,7 +89,7 @@ Full decision record: `docs/architecture/service-and-stack-organization.md`.
    `docs/templates/component-readme.md`), and `docs/runbooks/` registered in
    `docs/runbooks/README.md`.
 5. `make gateway-test` to confirm the rendered NGINX config is valid.
-6. If you want `nexus-compose` to keep generating an equivalent package,
+6. If you want Nexus Assembler to keep producing an equivalent deployment package,
    mirror the change into a `composition/catalog/` entry and its component
    fragment — see `composition/README.md`.
 
@@ -145,9 +145,9 @@ Full decision record: `docs/architecture/service-and-stack-organization.md`.
   default route is trusted-network-only by design, and a production
   authenticated overlay is drafted but not yet built (see
   `system/system-overseer/README.md`).
-- `nexus-compose` (`bin/nexus-compose`) is a real, tested CLI, but it's a
+- Nexus Assembler (`bin/nexus`) is a real, tested CLI, but it's a
   repo-local script — not a packaged or distributable artifact — and
-  `validate` doesn't yet recompile and rerun policy checks against generated
+  `validate` doesn't yet reassemble and rerun policy checks against assembled
   content. See `composition/README.md`'s "Known gaps."
 - Open work is tracked in [GitHub Issues](https://github.com/PyKhaled/Nexus/issues).
   As of this writing the only open one is #6, a from-scratch evidence audit

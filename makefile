@@ -11,11 +11,12 @@ DC = $(COMPOSE) $(SECRETS_ENV_FLAG) -f compose.yml
         gateway gateway-up gateway-test gateway-config gateway-reload \
         auth website status overseer loadbalancer \
         auth-dbshell website-dbshell \
+        blueprint-plan assemble deployment-validate assembler-test \
         composition-plan composition-generate composition-validate composition-test \
         clean prune
 
-COMPOSITION_SELECTION ?= composition/examples/nexus-development.yaml
-COMPOSITION_OUTPUT ?= generated/nexus-development
+BLUEPRINT ?= $(if $(COMPOSITION_SELECTION),$(COMPOSITION_SELECTION),composition/examples/nexus-development.yaml)
+DEPLOYMENT_PACKAGE ?= $(if $(COMPOSITION_OUTPUT),$(COMPOSITION_OUTPUT),generated/nexus-development)
 
 help:
 	@echo ""
@@ -44,12 +45,12 @@ help:
 	@echo " make status           Start Kener + Redis"
 	@echo " make overseer         Start Overseer"
 	@echo ""
-	@echo "Product composition"
-	@echo "===================="
-	@echo " make composition-plan      Resolve the selected product composition"
-	@echo " make composition-generate  Generate Compose and deployment evidence"
-	@echo " make composition-validate  Validate the generated composition"
-	@echo " make composition-test      Run composition compiler and CLI tests"
+	@echo "Product assembly"
+	@echo "================"
+	@echo " make blueprint-plan        Resolve the product blueprint"
+	@echo " make assemble              Assemble the deployment package"
+	@echo " make deployment-validate   Validate the deployment package"
+	@echo " make assembler-test        Run Assembler and CLI tests"
 	@echo ""
 	@echo "Database"
 	@echo "========"
@@ -66,7 +67,7 @@ help:
 ##########################################
 
 collect-secrets:
-	bin/nexus-compose secrets --selection $(COMPOSITION_SELECTION) --output secrets.env
+	bin/nexus secrets --blueprint $(BLUEPRINT) --output secrets.env
 
 ##########################################
 # Gateway lifecycle
@@ -127,22 +128,28 @@ overseer: gateway-up
 	$(DC) up -d overseer
 
 ##########################################
-# Product composition
+# Product assembly
 ##########################################
 
-composition-plan:
-	bin/nexus-compose plan --selection $(COMPOSITION_SELECTION)
+blueprint-plan:
+	bin/nexus plan --blueprint $(BLUEPRINT)
 
-composition-generate:
-	bin/nexus-compose generate --selection $(COMPOSITION_SELECTION) --output $(COMPOSITION_OUTPUT) --force
+assemble:
+	bin/nexus assemble --blueprint $(BLUEPRINT) --output $(DEPLOYMENT_PACKAGE) --force
 
-composition-validate:
-	bin/nexus-compose validate $(COMPOSITION_OUTPUT)
+deployment-validate:
+	bin/nexus validate $(DEPLOYMENT_PACKAGE)
 
-composition-test:
+assembler-test:
 	ruby tools/nexus_compose/test/compiler_test.rb
 	ruby tools/nexus_compose/test/cli_test.rb
 	ruby tools/nexus_compose/test/repository_manager_test.rb
+
+# Backward-compatible Make aliases.
+composition-plan: blueprint-plan
+composition-generate: assemble
+composition-validate: deployment-validate
+composition-test: assembler-test
 
 ##########################################
 # Database

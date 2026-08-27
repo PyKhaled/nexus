@@ -3,7 +3,7 @@ apiVersion: nexus.io/composition/v1alpha1
 product:
   name: nexus-secure
   edition: community
-  description: Private-registry-only high-assurance reference selection
+  description: Private-registry-only high-assurance reference blueprint
 
 deployment:
   target: self-hosted
