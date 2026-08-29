@@ -14,11 +14,14 @@ docker compose logs overseer
 curl http://overseer.localhost/healthz
 ```
 
-## Required future runbooks
+## Runbooks
 
-- credential and network isolation review before any non-trusted-network exposure
-- incident response if the Docker socket mount is ever exposed or misused
-- upgrade and rollback procedure for pinned image versions
+| Priority | Runbook | Scope | Exercise state |
+| --- | --- | --- | --- |
+| P0 | [Docker-socket exposure incident](overseer-socket-exposure-incident.md) | Immediate containment, evidence preservation, host/credential recovery boundary | Desk-reviewed; not exercised |
+| P1 | [Overseer upgrade and rollback](overseer-upgrade-and-rollback.md) | Digest-aware upgrade, project/CSRF verification, and rollback | Desk-reviewed; not exercised |
+
+Review evidence: [2026-08-30 minimum-runbook review](../../../../docs/runbooks/review-evidence-2026-08-30.md).
 
 Any procedure touching the Docker socket mount must document the exact
 host-level blast radius before it is executed.

@@ -5,7 +5,11 @@
 
 Owner: `<operational owner>`
 
-Last verified: `YYYY-MM-DD`
+Priority: `<P0 | P1 | P2 and rationale>`
+
+Last reviewed: `YYYY-MM-DD against source revision>`
+
+Last exercised: `<YYYY-MM-DD, evidence link | Not exercised>`
 
 Applies to: `<capability, versions, and environments>`
 
