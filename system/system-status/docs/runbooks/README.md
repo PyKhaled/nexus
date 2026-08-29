@@ -14,6 +14,14 @@ docker compose logs status status-redis
 curl http://status.localhost/healthcheck
 ```
 
+## Runbooks
+
+| Priority | Runbook | Scope | Exercise state |
+| --- | --- | --- | --- |
+| P0 / P1 | [Service-status outage triage](status-outage-triage.md) | Diagnose Kener/Redis/gateway health without removing persistent state | Desk-reviewed; not exercised |
+
+Review evidence: [2026-08-30 minimum-runbook review](../../../../docs/runbooks/review-evidence-2026-08-30.md).
+
 ## Required future runbooks
 
 - Kener and database backup and restore

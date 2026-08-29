@@ -17,6 +17,35 @@ The missing minimum procedure set and exercise evidence are tracked in
 | Observability service | [`system/system-overseer/docs/runbooks/`](../../system/system-overseer/docs/runbooks/) | Overseer operations |
 | Service scaffold | [`system/system-service/docs/runbooks/`](../../system/system-service/docs/runbooks/) | Procedures for services created from the scaffold |
 
+## Prioritized runbooks
+
+P0 covers high-impact active failure, security exposure, or destructive
+recovery where delay materially increases harm. P1 covers likely routine
+change and preventative recovery work whose failure can still cause an
+incident. Mixed priority means the normal operation is P1 but its incident or
+destructive path is P0.
+
+| Priority | Service or stack | Runbook |
+| --- | --- | --- |
+| P0 | Gateway | [Upstream failure](../../system/system-gateway/docs/runbooks/gateway-upstream-failure.md) |
+| P1 | Gateway | [Deploy and reload](../../system/system-gateway/docs/runbooks/gateway-deploy-and-reload.md) |
+| P1 / P0 | Gateway | [Certificate rotation](../../system/system-gateway/docs/runbooks/gateway-certificate-rotation.md) |
+| P0 / P1 | Authentication | [Administration and credential rotation](../../system/system-auth/docs/runbooks/auth-administration-and-credential-rotation.md) |
+| P0 / P1 | Authentication | [Database backup and restore](../../system/system-auth/docs/runbooks/auth-database-backup-and-restore.md) |
+| P0 / P1 | Authentication | [Upgrade and outage](../../system/system-auth/docs/runbooks/auth-upgrade-and-outage.md) |
+| P0 / P1 | Website | [Database and content recovery](../../system/system-website/docs/runbooks/website-database-and-content-recovery.md) |
+| P1 | Website | [Maintenance and upgrade](../../system/system-website/docs/runbooks/website-maintenance-and-upgrade.md) |
+| P0 | Website | [Extension failure and outage](../../system/system-website/docs/runbooks/website-extension-failure-and-outage.md) |
+| P0 | Observability | [Docker-socket exposure incident](../../system/system-overseer/docs/runbooks/overseer-socket-exposure-incident.md) |
+| P1 | Observability | [Upgrade and rollback](../../system/system-overseer/docs/runbooks/overseer-upgrade-and-rollback.md) |
+| P0 / P1 | Service status | [Outage triage](../../system/system-status/docs/runbooks/status-outage-triage.md) |
+
+## Review evidence
+
+- [2026-08-30 minimum-runbook desk review](review-evidence-2026-08-30.md) —
+  source-bound documentation review; no recovery or incident procedure was
+  executed.
+
 ## Conventions
 
 - Start new procedures from [`Runbook-Template.md`](Runbook-Template.md).
