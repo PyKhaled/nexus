@@ -1,8 +1,9 @@
 # Nexus Documentation
 
 This directory is the canonical entry point for documentation that must remain
-versioned with Nexus code and configuration. Proposed features stay in GitHub
-Issues and pull requests until they merge.
+versioned with Nexus code and configuration. Unmerged work stays in
+[GitHub Issues](https://github.com/PyKhaled/Nexus/issues) and pull requests
+until it merges.
 
 ## Current architecture
 
@@ -21,19 +22,12 @@ Issues and pull requests until they merge.
 - [Project Takeover](project/takeover/README.md) — evidence register, dated
   Engineering Baseline, migration ledger, and assurance plan for the current
   Nexus takeover review.
+- [GitHub work index](project/github-work-index.md) — published issues #16–#30,
+  priorities, dependencies, acceptance criteria, and source traceability.
 
 ## Component documentation
 
 - [Component README template](templates/component-readme.md) — capability, ownership, interfaces, data, configuration, lifecycle, and operations.
-
-## Proposed work
-
-- [Product composition system](https://github.com/PyKhaled/Nexus/issues/4)
-- [Current-main evidence audit](https://github.com/PyKhaled/Nexus/issues/6)
-
-The linked issues own feature rationale, scope, risks, and acceptance criteria.
-Draft pull requests own implementation review and progress. Documentation must
-not describe an unmerged feature as current behavior.
 
 ## Documentation boundary
 

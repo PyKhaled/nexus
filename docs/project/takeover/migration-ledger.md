@@ -28,7 +28,7 @@ organization-level standards.
 | FND-002: root Compose role | [Root README](../../../README.md) and [product profile](../../architecture/product-system-profile.md) | Keep existing authority; do not duplicate | Linked | Runtime validation before stronger claims |
 | FND-003 and FND-004: composition implementation | [Composition documentation](../../../composition/README.md) | Keep code and docs canonical; attach future test evidence to the relevant issue or review | Linked | Passing tests and validated packages |
 | FND-005: runbook coverage gap | [Runbook index](../../runbooks/README.md) and service-local runbook directories | Keep indexes; add procedures only when written and validated | Deferred | Operator scope, procedure content, and review evidence |
-| FND-006: fresh verification required | [GitHub issue #6](https://github.com/PyKhaled/Nexus/issues/6) | Use the issue for actionable audit work; update baseline from resulting evidence | Routed | Current issue state and completed acceptance evidence |
+| FND-006: fresh verification required | [GitHub issue #17](https://github.com/PyKhaled/Nexus/issues/17) | Use the issue for actionable audit work; update baseline from resulting evidence | Routed | Completed acceptance evidence |
 | FND-007: owner Unknown | Appropriate project or governance record | Do not infer from repository activity | Deferred | Explicit accountable-owner confirmation |
 | FND-008: readiness Unknown | Existing architecture, issue, and runbook authorities | Do not create a blanket readiness statement | Deferred | Bounded test, security, deployment, and operational evidence |
 

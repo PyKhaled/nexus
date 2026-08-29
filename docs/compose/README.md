@@ -34,7 +34,6 @@ This starts:
 <!-- 
 The API upstream remains reserved as `api:8000`. `system-service` is currently a repository scaffold rather than a runnable Nexus API, so it is not declared in `compose.yml`. 
 -->
-<!-- TODO: revice this document from this line till the end  -->
 ## Using an example overlay
 
 The examples may be inspected directly or applied explicitly. For TLS testing:

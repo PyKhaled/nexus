@@ -4,8 +4,9 @@ This directory contains the catalog and policy data read by the **Nexus
 Assembler** ([`tools/nexus_assembler/assembler.rb`](../tools/nexus_assembler/assembler.rb)).
 The Assembler turns a declarative **blueprint** into a **deployment package**;
 [`bin/nexus`](../bin/nexus) is its command line. See
-[issue #4](https://github.com/PyKhaled/Nexus/issues/4) for the feature
-rationale and acceptance gate.
+[issue #4](https://github.com/PyKhaled/Nexus/issues/4) for the historical
+feature rationale. Current integrity and evolution work is indexed in the
+[GitHub work index](../docs/project/github-work-index.md).
 
 ## Vocabulary
 
@@ -102,12 +103,12 @@ Adding a row to this document does not make that mode Assembler-supported.
 | Compose mode | Blueprint interpretation | Additional layers or behavior | Status |
 | --- | --- | --- | --- |
 | Lightweight development | Community edition + development + local + standard | Edition defaults and explicitly required services only; local builds and source mounts are allowed | Implemented by `nexus-development` |
-| Full / integration development | Development + local + assurance choice | Explicit PostgreSQL, Redis, mail sandbox, observability, and engineering tools as needed | Proposed capability combination |
-| Local test | Test + local | Disposable database/cache and a test-runner lifecycle | Proposed environment |
-| CI | Test + CI target | The same disposable integration topology with CI exit and reporting behavior | Proposed target |
-| Preview / PR | Preview + managed or self-hosted target | Prebuilt candidate image, isolated namespace, bounded secrets, disposable data, and expiry | Proposed environment |
-| Managed production | Production + managed-container target | Prebuilt application image with external database, cache, storage, email, and ingress | Proposed target |
-| Self-hosted staging | Staging + self-hosted target | Production-like image and real integrations without source mounts | Proposed environment |
+| Full / integration development | Development + local + assurance choice | Explicit PostgreSQL, Redis, mail sandbox, observability, and engineering tools as needed | Tracked in [#25](https://github.com/PyKhaled/Nexus/issues/25) |
+| Local test | Test + local | Disposable database/cache and a test-runner lifecycle | Tracked in [#22](https://github.com/PyKhaled/Nexus/issues/22) |
+| CI | Test + CI target | The same disposable integration topology with CI exit and reporting behavior | Tracked in [#22](https://github.com/PyKhaled/Nexus/issues/22) |
+| Preview / PR | Preview + managed or self-hosted target | Prebuilt candidate image, isolated namespace, bounded secrets, disposable data, and expiry | Tracked in [#23](https://github.com/PyKhaled/Nexus/issues/23) |
+| Managed production | Production + managed-container target | Prebuilt application image with external database, cache, storage, email, and ingress | Tracked in [#24](https://github.com/PyKhaled/Nexus/issues/24) |
+| Self-hosted staging | Staging + self-hosted target | Production-like image and real integrations without source mounts | Tracked in [#24](https://github.com/PyKhaled/Nexus/issues/24) |
 | Self-hosted production | Community edition + production + self-hosted + hardened or high-assurance | Prebuilt images, gateway/TLS, durable private services, registry and security controls | Implemented by `nexus-self-hosted-production` and `nexus-high-assurance` |
 
 Test, CI, preview, managed-container, and staging remain design targets. Add
@@ -311,12 +312,12 @@ external secrets, backup, and audit handled outside Compose).
 
 | Gap | Risk | Owner | Target or review date |
 | --- | --- | --- | --- |
-| `validate` checks the blueprint digest and locked image references but does not reassemble the blueprint and rerun policy checks against the assembled content | A security-relevant Compose edit made after `assemble` would not be caught by `validate` (tracked as the core unresolved item in issue #4) | Unassigned | None |
-| No `configure`, `list`, `explain`, or `diff` commands | Blueprints must be hand-written; there's no interactive builder, catalog browser, or lock-comparison tool | Unassigned | None |
-| Nexus Assembler is a repo-local tool, not a packaged/distributable artifact | It cannot be installed or version-pinned outside this repository | Unassigned | None |
-| Only `development` and `production` environments and `local` and `self-hosted` targets are implemented | Test, CI, preview, managed-container, and staging are documented outcomes rather than supported blueprints | Unassigned | None |
-| Catalog entries do not yet declare generic environment/target/assurance compatibility, dependencies, conflicts, or state lifecycle | Optional operational layers could otherwise require capability-name branches or be selected into unsafe deployment shapes | Unassigned | None |
-| Overseer has no production-safe implementation | Enabling it outside development would expose an unauthenticated control surface with Docker socket access | Unassigned | Review only after authenticated access and socket isolation exist |
+| `validate` checks the blueprint digest and locked image references but does not reassemble the blueprint and rerun policy checks against the assembled content | A security-relevant Compose edit made after `assemble` would not be caught by `validate` | [#19](https://github.com/PyKhaled/Nexus/issues/19) | Unscheduled |
+| No `configure`, `list`, `explain`, or `diff` commands | Blueprints must be hand-written; there's no interactive builder, catalog browser, or lock-comparison tool | [#21](https://github.com/PyKhaled/Nexus/issues/21) | Unscheduled |
+| Nexus Assembler is a repo-local tool, not a packaged/distributable artifact | It cannot be installed or version-pinned outside this repository | [#21](https://github.com/PyKhaled/Nexus/issues/21) | Unscheduled |
+| Only `development` and `production` environments and `local` and `self-hosted` targets are implemented | Test, CI, preview, managed-container, and staging are documented outcomes rather than supported blueprints | [#22](https://github.com/PyKhaled/Nexus/issues/22), [#23](https://github.com/PyKhaled/Nexus/issues/23), [#24](https://github.com/PyKhaled/Nexus/issues/24) | Unscheduled |
+| Catalog entries do not yet declare generic environment/target/assurance compatibility, dependencies, conflicts, or state lifecycle | Optional operational layers could otherwise require capability-name branches or be selected into unsafe deployment shapes | [#20](https://github.com/PyKhaled/Nexus/issues/20) | Unscheduled |
+| Overseer has no production-safe implementation | Enabling it outside development would expose an unauthenticated control surface with Docker socket access | [#26](https://github.com/PyKhaled/Nexus/issues/26) | Review only after authenticated access and socket isolation exist |
 
 ## Running the tests
 

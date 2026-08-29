@@ -12,7 +12,7 @@ composable software products. The proposal is deliberately separate from the
 current runtime description and remains a draft for review.
 
 Start with the [documentation index](docs/README.md) for current Nexus
-architecture and operational material. Proposed features and their acceptance
+architecture and operational material. Planned work and its acceptance
 criteria live in [GitHub Issues](https://github.com/PyKhaled/Nexus/issues).
 Reusable, technology-neutral product-system guidance is maintained separately
 in Engineering OS; this repository records only the Nexus profile, decisions,

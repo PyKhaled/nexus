@@ -21,7 +21,7 @@ product-specific evidence and implementation documentation.
 | Reusable takeover method and templates | Engineering OS |
 | Nexus architecture and implementation evidence | This repository |
 | Nexus architecture decisions | [Nexus decisions](../../decisions/) |
-| Proposed work and acceptance criteria | [GitHub Issues](https://github.com/PyKhaled/Nexus/issues) |
+| Tracked work and acceptance criteria | [GitHub Issues](https://github.com/PyKhaled/Nexus/issues) |
 | Service operational procedures | The owning service's `docs/runbooks/` directory |
 | Operational runbook discovery | [Nexus runbook index](../../runbooks/README.md) |
 | Initiative status, milestones, risks, and delivery decisions | An explicitly created Nexus project record, when one exists |
