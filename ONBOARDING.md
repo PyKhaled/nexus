@@ -117,9 +117,9 @@ Full decision record: `docs/architecture/service-and-stack-organization.md`.
   `composition/README.md` explains why `observability` (Overseer) is
   selected in the development example but deliberately absent from the
   production ones.
-- **Docs must not describe unmerged work as current.** `docs/README.md`'s
-  "Proposed work" list and each capability's state in `product-system.yaml`
-  should match what's actually merged to `main`, not what's in flight.
+- **Docs must not describe unmerged work as current.** GitHub Issues own
+  unmerged scope and acceptance criteria; each capability's state in
+  `product-system.yaml` must match what's actually merged to `main`.
 
 ## Before opening a PR
 
@@ -150,9 +150,10 @@ Full decision record: `docs/architecture/service-and-stack-organization.md`.
   `validate` doesn't yet reassemble and rerun policy checks against assembled
   content. See `composition/README.md`'s "Known gaps."
 - Open work is tracked in [GitHub Issues](https://github.com/PyKhaled/Nexus/issues).
-  As of this writing the only open one is #6, a from-scratch evidence audit
-  of current `main` — a good first read if you want to see exactly what has
-  and hasn't been independently re-verified.
+  Start with the [commit-bound evidence baseline](https://github.com/PyKhaled/Nexus/issues/17)
+  for what has and has not been independently verified, and the
+  [documentation reconciliation issue](https://github.com/PyKhaled/Nexus/issues/30)
+  when changing current-state documentation.
 
 ## Where to go next
 

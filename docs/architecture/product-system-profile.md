@@ -83,7 +83,8 @@ or engineering-tool capabilities explicitly.
   implementation or completed authentication and socket-isolation controls.
 - Test, CI, preview, managed production, full development, and staging are
   design targets until their schema, catalog metadata, policies, examples, and
-  tests are implemented.
+  tests are implemented. Their active implementation issues are linked from
+  the [composition guide](../../composition/README.md#deployment-catalog).
 
 ## Ownership boundaries
 
@@ -95,15 +96,11 @@ or engineering-tool capabilities explicitly.
 
 See [Service and Stack Organization](service-and-stack-organization.md) for the accepted repository decision.
 
-## Planned capabilities
-
-Planned work is not current architecture. It is tracked in GitHub:
-
-- [Product composition system](https://github.com/PyKhaled/Nexus/issues/4)
-
 Help center, notifications, client and administration experiences, business
-domains, and integrations are not Nexus commitments until a concrete issue
-defines users, scope, ownership, and acceptance criteria.
+domains, and integrations are not Nexus commitments. Their disposition is
+tracked in [issue #29](https://github.com/PyKhaled/Nexus/issues/29), which must
+define users, scope, ownership, and acceptance criteria before any
+implementation issue is opened.
 
 ## Reusable guidance
 

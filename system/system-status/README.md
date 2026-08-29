@@ -154,8 +154,8 @@ A replacement status implementation must deliberately migrate:
 
 | Gap | Risk | Owner | Target or review date |
 | --- | --- | --- | --- |
-| First-run owner creation and initial monitor assignment are manual | New environments start with an empty status page | Unassigned | None |
-| Email delivery and public subscriber notifications are not configured | Incidents are not proactively communicated | Unassigned | None |
-| The local status service shares the host and network it monitors | A full network or host failure is invisible to itself | Unassigned | None |
-| No backup, restore, retention, external probing, or upgrade runbook exists | Data loss or a stale status page can go unnoticed | Unassigned | None |
-| SQLite is not the selected production database topology | Does not meet shared-deployment durability expectations | Unassigned | None |
+| First-run owner creation and initial monitor assignment are manual | New environments start with an empty status page | [#27](https://github.com/PyKhaled/Nexus/issues/27) | Unscheduled |
+| Email delivery and public subscriber notifications are not configured | Incidents are not proactively communicated | [#27](https://github.com/PyKhaled/Nexus/issues/27) | Unscheduled |
+| The local status service shares the host and network it monitors | A full network or host failure is invisible to itself | [#27](https://github.com/PyKhaled/Nexus/issues/27) | Unscheduled |
+| No backup, restore, retention, external probing, or upgrade runbook exists | Data loss or a stale status page can go unnoticed | [#27](https://github.com/PyKhaled/Nexus/issues/27), [#28](https://github.com/PyKhaled/Nexus/issues/28) | Unscheduled |
+| SQLite is not the selected production database topology | Does not meet shared-deployment durability expectations | [#27](https://github.com/PyKhaled/Nexus/issues/27) | Unscheduled |
