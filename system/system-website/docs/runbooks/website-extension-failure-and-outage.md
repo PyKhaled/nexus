@@ -44,7 +44,7 @@ destroying the database or content volume.
 1. Capture current state before restart:
 
    ```sh
-   curl --include http://127.0.0.1/
+   curl --include http://localhost/
    docker compose ps gateway website website-db
    docker compose logs --tail 200 website website-db gateway
    ```

@@ -3,8 +3,10 @@
 Runbooks are owned by the service or stack whose operation they describe. For example, `system-website` is the WordPress stack, so its runbooks live at `system/system-website/docs/runbooks/`.
 This directory is the central discovery index; service-specific procedures remain beside their deployable boundary under `system/`.
 
-The missing minimum procedure set and exercise evidence are tracked in
-[issue #28](https://github.com/PyKhaled/Nexus/issues/28).
+The initial minimum procedure set was established by
+[issue #28](https://github.com/PyKhaled/Nexus/issues/28). Its bounded desk
+review is recorded below; individual runbooks remain marked “Not exercised”
+until runtime evidence exists.
 
 ## Service runbook indexes
 

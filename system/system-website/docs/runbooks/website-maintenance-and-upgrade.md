@@ -73,8 +73,8 @@ before every upgrade.
 5. Verify public and administrative paths:
 
    ```sh
-   curl --fail --show-error http://127.0.0.1/
-   curl --include http://127.0.0.1/wp-admin/
+   curl --fail --show-error http://localhost/
+   curl --include http://localhost/wp-admin/
    docker compose ps website website-db
    ```
 
