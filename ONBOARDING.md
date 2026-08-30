@@ -151,9 +151,9 @@ Full decision record: `docs/architecture/service-and-stack-organization.md`.
   content. See `composition/README.md`'s "Known gaps."
 - Open work is tracked in [GitHub Issues](https://github.com/PyKhaled/Nexus/issues).
   Start with the [commit-bound evidence baseline](https://github.com/PyKhaled/Nexus/issues/17)
-  for what has and has not been independently verified, and the
-  [documentation reconciliation issue](https://github.com/PyKhaled/Nexus/issues/30)
-  when changing current-state documentation.
+  for what has and has not been independently verified. The
+  [GitHub work index](docs/project/github-work-index.md) records the original
+  scope and dependency map, but live GitHub state is authoritative.
 
 ## Where to go next
 

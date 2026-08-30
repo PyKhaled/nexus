@@ -19,11 +19,13 @@ until it merges.
 
 ## Project evidence
 
-- [Project Takeover](project/takeover/README.md) — evidence register, dated
-  Engineering Baseline, migration ledger, and assurance plan for the current
-  Nexus takeover review.
-- [GitHub work index](project/github-work-index.md) — published issues #16–#30,
-  priorities, dependencies, acceptance criteria, and source traceability.
+- [Project Takeover](project/takeover/README.md) — point-in-time evidence
+  package captured on 2026-08-27; it does not represent current validation.
+- [GitHub work index](project/github-work-index.md) — publication-time index
+  for issues #16–#30; GitHub remains authoritative for current issue state.
+- [Documentation reconciliation evidence](project/documentation-reconciliation-2026-08-30.md)
+  — source-bound issue #30 review, capability comparison, and static validation
+  results.
 
 ## Component documentation
 

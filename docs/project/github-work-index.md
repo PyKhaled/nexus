@@ -6,9 +6,10 @@ Prepared: 2026-08-30
 
 ## Purpose
 
-This document records the scoped issue drafts used to publish the active Nexus
-backlog. It is an issue-source archive, not a commitment or a description of
-current implementation.
+This document records the scoped drafts used to publish Nexus issues #16–#30.
+It is a publication-time source archive, not a live backlog, a commitment, or a
+description of current implementation. Each linked GitHub issue is
+authoritative for its current open/closed state.
 
 The drafts were collected from:
 

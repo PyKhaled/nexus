@@ -11,16 +11,22 @@ claims.
 
 ## Current repository baseline
 
-The root `compose.yml` is the source of truth for local development. On current `main`, it assembles:
+The root `compose.yml` is the source of truth for local development. The
+current capability inventory agrees with `product-system.yaml` and the
+Assembler catalog:
 
-- NGINX
-- keycloak
-- wordpress
-- kener and redis
-- overseer
+| Capability | State | Implementation | Root Compose services |
+| --- | --- | --- | --- |
+| `gateway` | Partial | NGINX | `gateway` |
+| `website` | Partial | WordPress | `website`, `website-db` |
+| `authentication` | Partial | Keycloak | `keycloak`, `keycloak-db` |
+| `service-status` | Partial | Kener | `status`, `status-redis` |
+| `observability` | Partial | Overseer | `overseer` |
 
-
-The repository also contains a service scaffold, Compose examples, and component documentation. Those artifacts do not by themselves establish a complete product, production readiness, operational coverage, or an accountable product owner.
+The repository also contains a non-runnable service scaffold, Compose examples,
+and component documentation. Those artifacts do not by themselves establish a
+complete product, production readiness, operational coverage, or an
+accountable product owner.
 
 ## Capability vocabulary
 
