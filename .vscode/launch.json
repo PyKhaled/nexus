@@ -1,53 +1,43 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
+    // Build checks Ruby syntax, builds Compose images, and validates NGINX.
+    // Test runs all root-owned Assembler tests; external services own their tests.
+    // Start leaves the Compose stack running; use make down to stop it.
+    // Before Debug, launch Chrome with --remote-debugging-port=9222
+    // and a non-default --user-data-dir, then open http://localhost/.
+    // Debug attaches to browser JavaScript, not container backend processes.
+    // Adjust the URL/filter if the gateway domain or port is overridden.
     "configurations": [
         {
-            "name": "run",
-            "type": "debugpy",
+            "name": "Build",
+            "type": "node-terminal",
             "request": "launch",
-            "program": "${workspaceFolder}/manage.py",
-            "args": [
-                "runserver"
-            ],
-            "console": "internalConsole",
-            "django": true
+            "command": "ruby -e 'files = [\"bin/nexus\"] + Dir[\"tools/**/*.rb\"]; exit(files.all? { |file| system(RbConfig.ruby, \"-c\", file) } ? 0 : 1)' && make build gateway-test",
+            "cwd": "${workspaceFolder}"
         },
         {
-            "name": "debug",
-            "type": "debugpy",
+            "name": "Test",
+            "type": "node-terminal",
             "request": "launch",
-            "program": "${workspaceFolder}/manage.py",
-            "args": [
-                "runserver"
-            ],
-            "console": "internalConsole",
-            "django": true
+            "command": "make assembler-test",
+            "cwd": "${workspaceFolder}"
         },
         {
-            "name": "test",
-            "type": "debugpy",
+            "name": "Start",
+            "type": "node-terminal",
             "request": "launch",
-            "program": "${workspaceFolder}/manage.py",
-            "args": [
-                "runserver"
-            ],
-            "console": "internalConsole",
-            "django": true
+            "command": "make up",
+            "cwd": "${workspaceFolder}"
         },
         {
-            "name": "test coverage",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/manage.py",
-            "args": [
-                "runserver"
-            ],
-            "console": "internalConsole",
-            "django": true
+            "name": "Debug",
+            "type": "chrome",
+            "request": "attach",
+            "address": "127.0.0.1",
+            "port": 9222,
+            "webRoot": "${workspaceFolder}",
+            "urlFilter": "http://localhost/*",
+            "timeout": 30000
         }
-
     ]
 }
