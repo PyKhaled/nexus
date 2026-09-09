@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "minitest/mock"
 require "tmpdir"
 require_relative "../assembler"
+require_relative "support/secret_repository_fixture"
 
 class NexusAssemblerTest < Minitest::Test
+  include SecretRepositoryFixture
   ROOT = File.expand_path("../../..", __dir__)
 
   def setup
@@ -274,10 +277,10 @@ class NexusAssemblerTest < Minitest::Test
   end
 
   def test_collect_secrets_merges_selected_components_env_files
-    with_website_env_content("MYSQL_PASSWORD=test-value\n", "MYSQL_ROOT_PASSWORD=test-root-value\n") do
+    with_secret_repository(website: "MYSQL_PASSWORD=test-value\n", database: "MYSQL_ROOT_PASSWORD=test-root-value\n") do |repository|
       Dir.mktmpdir("nexus-assembler-secrets") do |directory|
         output = File.join(directory, "secrets.env")
-        report = @assembler.collect_secrets(
+        report = NexusAssembler::Assembler.new(repository).collect_secrets(
           blueprint_hash(edition: "custom", capabilities: {"gateway" => "nginx", "website" => "wordpress"}),
           output
         )
@@ -292,10 +295,10 @@ class NexusAssemblerTest < Minitest::Test
   end
 
   def test_collect_secrets_rejects_duplicate_keys
-    with_website_env_content("MYSQL_PASSWORD=one\n", "MYSQL_PASSWORD=two\n") do
+    with_secret_repository(website: "MYSQL_PASSWORD=one\n", database: "MYSQL_PASSWORD=two\n") do |repository|
       Dir.mktmpdir("nexus-assembler-secrets") do |directory|
         error = assert_raises(NexusAssembler::ValidationError) do
-          @assembler.collect_secrets(
+          NexusAssembler::Assembler.new(repository).collect_secrets(
             blueprint_hash(edition: "custom", capabilities: {"gateway" => "nginx", "website" => "wordpress"}),
             File.join(directory, "secrets.env")
           )
@@ -306,26 +309,67 @@ class NexusAssemblerTest < Minitest::Test
   end
 
   def test_collect_secrets_reports_missing_required_secrets
-    Dir.mktmpdir("nexus-assembler-secrets") do |directory|
-      report = @assembler.collect_secrets(example("nexus-development.yaml"), File.join(directory, "secrets.env"))
+    with_secret_repository(website: "MYSQL_PASSWORD=synthetic-value\n") do |repository|
+      report = NexusAssembler::Assembler.new(repository).collect_secrets(
+        example("nexus-development.yaml"), File.join(repository.root, "secrets.env")
+      )
       assert_includes report.fetch("missingRequired"), "KENER_SECRET_KEY"
     end
   end
 
-  private
-
-  def with_website_env_content(website_content, website_db_content)
-    website_env = File.join(ROOT, "system/system-website/.env")
-    website_db_env = File.join(ROOT, "system/system-website-db/.env")
-    original_website = File.read(website_env)
-    original_website_db = File.read(website_db_env)
-    File.write(website_env, website_content)
-    File.write(website_db_env, website_db_content)
-    yield
-  ensure
-    File.write(website_env, original_website)
-    File.write(website_db_env, original_website_db)
+  def test_collect_secrets_rejects_missing_env_files
+    with_secret_repository do |repository|
+      output = File.join(repository.root, "secrets.env")
+      error = assert_raises(NexusAssembler::ValidationError) do
+        NexusAssembler::Assembler.new(repository).collect_secrets(example("nexus-development.yaml"), output)
+      end
+      assert_includes error.message, "no .env files found"
+      refute File.exist?(output)
+    end
   end
+
+  def test_secret_fixture_preserves_source_files_and_cleans_up_on_failure
+    Dir.mktmpdir("nexus-secret-source") do |source|
+      composition = File.join(source, "composition")
+      FileUtils.mkdir_p(composition)
+      sentinel = File.join(composition, ".env")
+      File.write(sentinel, "SENTINEL=synthetic-preserve\n")
+      File.chmod(0o600, sentinel)
+      definition = File.join(composition, "fixture.yaml")
+      File.write(definition, "synthetic: true\n")
+
+      [:setup, :execution].each do |failure_stage|
+        fixture_root = nil
+        original_write = File.method(:write)
+        writer = lambda do |path, content|
+          fixture_root = File.expand_path("../..", File.dirname(path))
+          if failure_stage == :setup && path.include?("system-website-db")
+            raise IOError, "synthetic setup failure"
+          end
+          original_write.call(path, content)
+        end
+
+        assert_raises(IOError) do
+          File.stub(:write, writer) do
+            with_secret_repository(website: "FIRST=synthetic\n", database: "SECOND=synthetic\n",
+                                   composition_root: composition) do |repository|
+              assert_equal fixture_root, repository.root
+              refute File.exist?(File.join(repository.root, "composition/.env"))
+              assert_equal "synthetic: true\n", File.read(File.join(repository.root, "composition/fixture.yaml"))
+              raise IOError, "synthetic execution failure"
+            end
+          end
+        end
+        refute_nil fixture_root
+        refute File.exist?(fixture_root)
+        assert_equal "SENTINEL=synthetic-preserve\n", File.read(sentinel)
+        assert_equal 0o600, File.stat(sentinel).mode & 0o777
+        assert_equal "synthetic: true\n", File.read(definition)
+      end
+    end
+  end
+
+  private
 
   def example(name)
     File.join(ROOT, "composition", "examples", name)

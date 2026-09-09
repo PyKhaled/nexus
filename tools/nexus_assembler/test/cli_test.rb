@@ -5,8 +5,10 @@ require "json"
 require "stringio"
 require "tmpdir"
 require_relative "../cli"
+require_relative "support/secret_repository_fixture"
 
 class NexusAssemblerCliTest < Minitest::Test
+  include SecretRepositoryFixture
   ROOT = File.expand_path("../../..", __dir__)
 
   def setup
@@ -145,20 +147,14 @@ class NexusAssemblerCliTest < Minitest::Test
   end
 
   def test_secrets_command
-    website_env = File.join(ROOT, "system/system-website/.env")
-    website_db_env = File.join(ROOT, "system/system-website-db/.env")
-    original_website = File.read(website_env)
-    original_website_db = File.read(website_db_env)
-    File.write(website_env, "MYSQL_PASSWORD=test-value\n")
-    File.write(website_db_env, "MYSQL_ROOT_PASSWORD=test-root-value\n")
-
-    Dir.mktmpdir("nexus-assembler-cli") do |directory|
+    with_secret_repository(website: "MYSQL_PASSWORD=test-value\n", database: "MYSQL_ROOT_PASSWORD=test-root-value\n") do |repository|
+      directory = repository.root
       output = StringIO.new
       errors = StringIO.new
       destination = File.join(directory, "secrets.env")
       status = run_cli(
         ["secrets", "--blueprint", development_blueprint, "--output", destination],
-        output: output, error: errors
+        output: output, error: errors, repository: repository
       )
 
       assert_equal 0, status, errors.string
@@ -167,9 +163,6 @@ class NexusAssemblerCliTest < Minitest::Test
       assert_equal destination, parsed.fetch("output")
       assert_includes errors.string, "missing required secrets"
     end
-  ensure
-    File.write(website_env, original_website)
-    File.write(website_db_env, original_website_db)
   end
 
   private
@@ -178,7 +171,7 @@ class NexusAssemblerCliTest < Minitest::Test
     File.join(ROOT, "composition/examples/nexus-development.yaml")
   end
 
-  def run_cli(argv, output: StringIO.new, error: StringIO.new)
-    NexusAssembler::CLI.new(argv, output: output, error: error, repository: @repository).run
+  def run_cli(argv, output: StringIO.new, error: StringIO.new, repository: @repository)
+    NexusAssembler::CLI.new(argv, output: output, error: error, repository: repository).run
   end
 end
