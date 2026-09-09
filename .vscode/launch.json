@@ -1,15 +1,20 @@
 {
     "version": "0.2.0",
-    // Build checks Ruby syntax, builds Compose images, and validates NGINX.
-    // Test runs all root-owned Assembler tests; external services own their tests.
-    // Start leaves the Compose stack running; use make down to stop it.
+    // Build: check Ruby syntax, compile Compose images, and validate NGINX.
+    // Test: run all root-owned automated Assembler and CLI tests.
+    // Independently managed services run their own test suites.
+    // Start: build and launch the complete deployed-style Compose environment,
+    // then display container status. Use make down to stop it.
+    // Debug: attach to the started site's browser JavaScript to set breakpoints,
+    // step through code, and inspect variables.
     // Before Debug, launch Chrome with --remote-debugging-port=9222
     // and a non-default --user-data-dir, then open http://localhost/.
     // Debug attaches to browser JavaScript, not container backend processes.
-    // Adjust the URL/filter if the gateway domain or port is overridden.
+    // Enter the site's URL pattern when attaching (including any custom port).
     "configurations": [
         {
             "name": "Build",
+            "presentation": { "order": 1 },
             "type": "node-terminal",
             "request": "launch",
             "command": "ruby -e 'files = [\"bin/nexus\"] + Dir[\"tools/**/*.rb\"]; exit(files.all? { |file| system(RbConfig.ruby, \"-c\", file) } ? 0 : 1)' && make build gateway-test",
@@ -17,6 +22,7 @@
         },
         {
             "name": "Test",
+            "presentation": { "order": 2 },
             "type": "node-terminal",
             "request": "launch",
             "command": "make assembler-test",
@@ -24,20 +30,31 @@
         },
         {
             "name": "Start",
+            "presentation": { "order": 3 },
             "type": "node-terminal",
             "request": "launch",
-            "command": "make up",
+            "command": "make up && make ps",
             "cwd": "${workspaceFolder}"
         },
         {
             "name": "Debug",
+            "presentation": { "order": 4 },
             "type": "chrome",
             "request": "attach",
             "address": "127.0.0.1",
             "port": 9222,
             "webRoot": "${workspaceFolder}",
-            "urlFilter": "http://localhost/*",
+            "urlFilter": "${input:debugUrlFilter}",
+            "sourceMaps": true,
             "timeout": 30000
+        }
+    ],
+    "inputs": [
+        {
+            "id": "debugUrlFilter",
+            "type": "promptString",
+            "description": "URL pattern of the running site to debug in Chrome",
+            "default": "http://localhost/*"
         }
     ]
 }
