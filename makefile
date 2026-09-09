@@ -2,12 +2,20 @@
 
 COMPOSE ?= docker compose
 SECRETS_ENV ?= secrets.env
-SECRETS_ENV_FLAG = $(if $(wildcard $(SECRETS_ENV)),--env-file $(SECRETS_ENV))
-DC = $(COMPOSE) $(SECRETS_ENV_FLAG) -f compose.yml
+ENV ?= development
+COMPOSE_FILE ?= compose.yml
+COMPOSE_SECRETS ?=
+export NEXUS_ENV = $(ENV)
+export NEXUS_CONFIG_DIR
+export SECRETS_ENV
+CONFIG = bash scripts/config.sh
+# /dev/null disables Compose's implicit .env lookup: the helper loads literal values.
+CONFIG_OVERLAY = $(if $(filter $(CURDIR)/compose.yml,$(abspath $(COMPOSE_FILE))),-f "compose.config.yml")
+DC = $(CONFIG) run -- $(COMPOSE) --env-file /dev/null -f "$(COMPOSE_FILE)" $(CONFIG_OVERLAY) $(if $(COMPOSE_SECRETS),-f "$(COMPOSE_SECRETS)")
 
 .PHONY: help \
         up down restart build rebuild ps logs \
-        collect-secrets \
+        collect-secrets config-init config-path config-check config-test config-compose-test compose-check compose-ready \
         gateway gateway-up gateway-test gateway-config gateway-reload \
         auth website status overseer loadbalancer \
         auth-dbshell website-dbshell \
@@ -28,6 +36,12 @@ help:
 	@echo " make logs             Tail development logs"
 	@echo " make build            Build local images"
 	@echo " make rebuild          Build local images without cache"
+	@echo " make config-init      Create private config.env and secret.env (no overwrite)"
+	@echo " make config-path      Show runtime file locations (ENV=development|production)"
+	@echo " make config-check     Check runtime file syntax and permissions"
+	@echo " make compose-check    Validate the resolved Compose model without printing secrets"
+	@echo " make config-test      Test the Bash configuration workflow"
+	@echo " make config-compose-test  Test Compose mappings and secret isolation"
 	@echo " make collect-secrets  Merge service .env files into secrets.env"
 	@echo ""
 	@echo "Operations"
@@ -65,6 +79,32 @@ help:
 # Secrets
 ##########################################
 
+config-init:
+	@$(CONFIG) init
+
+config-path:
+	@$(CONFIG) path
+
+config-check:
+	@$(CONFIG) check
+
+config-test:
+	@bash scripts/tests/config_test.sh
+
+# The root model is development-only; ENV selects files, not deployment policy.
+compose-ready:
+	@if [ "$(ENV)" = production ] && [ "$(abspath $(COMPOSE_FILE))" = "$(CURDIR)/compose.yml" ]; then \
+	  echo "Select a production deployment with COMPOSE_FILE=...; root compose.yml is development-only." >&2; exit 1; \
+	fi
+
+up down build rebuild ps logs gateway-up gateway-test gateway-config gateway-reload auth website status overseer auth-dbshell website-dbshell clean compose-check: compose-ready
+
+config-compose-test:
+	@ruby scripts/tests/compose_config_test.rb
+
+compose-check:
+	@$(DC) config --quiet
+
 collect-secrets:
 	bin/nexus secrets --blueprint $(BLUEPRINT) --output secrets.env
 
@@ -73,12 +113,14 @@ collect-secrets:
 ##########################################
 
 up:
-	$(DC) up -d --build
+	$(DC) up -d $(if $(filter development,$(ENV)),--build)
 
 down:
 	$(DC) down
 
-restart: down up
+restart:
+	@$(MAKE) down
+	@$(MAKE) up
 
 build:
 	$(DC) build
@@ -95,7 +137,7 @@ logs:
 gateway: gateway-up
 
 gateway-up:
-	$(DC) up -d --build gateway
+	$(DC) up -d $(if $(filter development,$(ENV)),--build) gateway
 
 gateway-test:
 	$(DC) run --rm --no-deps gateway nginx -t
@@ -115,7 +157,7 @@ loadbalancer: gateway-up
 ##########################################
 
 auth: gateway-up
-	$(DC) up -d --build keycloak keycloak-db
+	$(DC) up -d $(if $(filter development,$(ENV)),--build) keycloak keycloak-db
 
 website: gateway-up
 	$(DC) up -d website website-db
@@ -149,10 +191,10 @@ assembler-test:
 ##########################################
 
 auth-dbshell:
-	$(DC) exec keycloak-db psql -U $${KC_DB_USERNAME:-keycloak}
+	$(DC) exec keycloak-db sh -c 'exec psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
 
 website-dbshell:
-	$(DC) exec website-db mysql -u $${MYSQL_USER:-wordpress} -p$${MYSQL_PASSWORD:-change-me-wordpress-password} $${MYSQL_DATABASE:-wordpress}
+	$(DC) exec website-db sh -c 'export MYSQL_PWD="$${MYSQL_PASSWORD:-$$(cat "$${MYSQL_PASSWORD_FILE:-/dev/null}")}"; exec mysql -u "$$MYSQL_USER" "$$MYSQL_DATABASE"'
 
 ##########################################
 # Cleanup
