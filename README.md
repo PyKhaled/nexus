@@ -68,20 +68,23 @@ Expected response:
 ok
 ```
 
-The root Make targets load `secrets.env` automatically when it exists.
-
-Generate `secrets.env` from the `.env` files of the components in the default
-blueprint, `composition/examples/nexus-development.yaml` (override with
-`BLUEPRINT`):
+Use the Make-based runtime configuration workflow when overriding defaults:
 
 ```sh
-make collect-secrets
+make config-init       # Create private .env/development/{config,secret}.env
+make config-path
+# Edit the files privately.
+make config-check     # Check syntax and permissions
+make compose-check    # Validate Compose without printing values
+make up
 ```
 
-This runs `bin/nexus secrets --blueprint`, which stops if two files define the
-same key — preventing one service's value from silently replacing another's —
-and warns about any required secret no `.env` file supplies yet. See
-`composition/README.md` for the full command reference.
+Make loads configuration and secrets through a small Bash helper. Existing
+component authentication `.env` files and root `secrets.env` remain lower-priority
+development inputs. `make collect-secrets` still invokes the Assembler collector
+and rejects duplicate keys. Runtime files and values are never sourced as shell
+code. See [runtime configuration](config/README.md) for precedence, production
+paths, optional mounted WordPress/MySQL secrets, and Docker/Swarm boundaries.
 
 Blueprints may also declare independently versioned source repositories below
 `system/`. Repository synchronization is the explicit network step; planning,
@@ -116,8 +119,8 @@ make gateway
 ```
 
 The website and Keycloak stacks default to checked-in development placeholders.
-Create private Keycloak `.env` files and override the root `secrets.env` values
-before any shared deployment. Custom Keycloak provider and theme JARs are
+Supply deployment-specific credentials through the runtime configuration
+workflow before any shared deployment. Custom Keycloak provider and theme JARs are
 optional; place them in `system/system-auth/providers/` or
 `theme/` when available.
 
@@ -145,7 +148,9 @@ See `system/system-gateway/README.md` for configuration layout, troubleshooting,
 
 ## Compose modes and templates
 
-Only `compose.yml` is active and used by the development Make targets. Optional
+`compose.yml` is the default model used by the development Make targets, with
+`compose.config.yml` adding authentication variable mappings.
+`compose.secrets.yml` is an opt-in WordPress/MySQL file-secret overlay. Optional
 TLS, OIDC API authentication, combined secure-development, and standalone stack
 definitions live under `docs/compose/templates/` as documentation examples.
 
