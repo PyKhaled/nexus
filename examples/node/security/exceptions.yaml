@@ -1,0 +1,2 @@
+# Add only reviewed, time-limited exceptions; see docs/pipeline/reference/risk-policies.md.
+exceptions: []

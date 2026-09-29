@@ -1,0 +1,54 @@
+# Starter coverage: Trivy vulnerabilities and misconfigurations, not a full scanner suite.
+name: Security checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions: {}
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tools/secreport/requirements.txt
+      - run: mkdir -p raw-artifacts
+      - name: Collect scanner evidence
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig
+          format: sarif
+          output: raw-artifacts/trivy.sarif
+          exit-code: '0'
+      - name: Validate evidence and report
+        env:
+          TARGET_REF: ${{ github.base_ref || github.ref_name }}
+        run: |
+          python tools/secreport/validate_evidence.py raw-artifacts/trivy.sarif
+          test -f security/risk-policy.yaml
+          test -f security/exceptions.yaml
+          python tools/secreport/secreport.py run --input raw-artifacts --out reports \
+            --policy security/risk-policy.yaml --exceptions security/exceptions.yaml \
+            --ref "$TARGET_REF" --markdown --sarif
+      - name: Enforce risk policy
+        run: python tools/secreport/secreport.py gate --results reports/findings.json
+      - name: Save evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: security-report
+          path: |
+            raw-artifacts/
+            reports/
+          retention-days: 14
+          if-no-files-found: warn

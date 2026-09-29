@@ -1,0 +1,30 @@
+# Optional development deployment request; adapt the payload to your Devtron integration.
+name: Request development deployment
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: Previously published full image reference (prefer a digest)
+        required: true
+        type: string
+permissions: {}
+jobs:
+  notify:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: development
+    steps:
+      - name: Request deployment
+        env:
+          WEBHOOK: ${{ secrets.DEVTRON_WEBHOOK_URL_DEV }}
+          API_TOKEN: ${{ secrets.DEVTRON_API_TOKEN }}
+          IMAGE: ${{ inputs.image }}
+        run: |
+          test -n "$WEBHOOK"
+          test -n "$API_TOKEN"
+          jq -n --arg image "$IMAGE" '{dockerImage: $image}' > payload.json
+          curl --fail --silent --show-error --max-time 30 \
+            --output /dev/null --request POST "$WEBHOOK" \
+            --header 'Content-Type: application/json' \
+            --header "api-token: $API_TOKEN" --data @payload.json

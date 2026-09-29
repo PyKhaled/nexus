@@ -1,0 +1,7 @@
+# Optional Trivy CLI settings. Starter actions set their options explicitly.
+format: sarif
+exit-code: 0
+scan:
+  scanners:
+    - vuln
+    - misconfig

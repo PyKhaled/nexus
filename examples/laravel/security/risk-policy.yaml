@@ -1,0 +1,14 @@
+# Starter policy: all unaccepted HIGH and CRITICAL findings block, including first run.
+version: 1
+context:
+  internet_facing: true
+  handles_pii: false
+  environment: production
+gate:
+  block_on_new_only: false
+  always_block: [verified_secret, kev_listed_critical, expired_exception]
+  block_above_risk_score: 101
+  max_new_high: 0
+  max_new_critical: 0
+llm_triage:
+  enabled: false

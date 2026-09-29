@@ -1,5 +1,7 @@
 secrets.env
 .DS_Store
+__pycache__/
+*.py[cod]
 system/system-auth-db/data/
 
 # Private runtime configuration and mounted secret files

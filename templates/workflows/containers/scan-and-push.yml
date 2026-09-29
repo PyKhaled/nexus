@@ -1,0 +1,73 @@
+# Manual publishing is independent of CI; use only a reviewed, passing main revision.
+name: Scan and publish
+on:
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Set commit tag
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: echo "IMAGE=ghcr.io/${REPOSITORY,,}:${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+
+      - name: Build locally
+        run: docker build --tag "$IMAGE" .
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tools/secreport/requirements.txt
+      - run: mkdir -p raw-artifacts
+
+      - name: Scan local image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: image
+          image-ref: ${{ env.IMAGE }}
+          format: sarif
+          output: raw-artifacts/trivy.sarif
+          exit-code: '0'
+
+      - name: Report and gate
+        run: |
+          python tools/secreport/validate_evidence.py raw-artifacts/trivy.sarif
+          test -f security/release-policy.yaml
+          test -f security/exceptions.yaml
+          python tools/secreport/secreport.py run --input raw-artifacts --out reports \
+            --policy security/release-policy.yaml --exceptions security/exceptions.yaml --markdown
+          python tools/secreport/secreport.py gate --results reports/findings.json
+
+      - name: Save release evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-report
+          path: |
+            raw-artifacts/
+            reports/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Log in after checks
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push the same local image
+        run: docker push "$IMAGE"

@@ -1,0 +1,10 @@
+# Report engine dependencies — all permissively licensed open source.
+#
+# Upper bounds are deliberate. These were unbounded (`>=4.2.0`), which meant CI
+# installed whatever was newest at the time and a breaking major could land
+# without a PR to review. The cap makes a major bump a decision instead of a
+# surprise; Dependabot will open a PR to raise it.
+PyYAML>=6.0.3,<7
+openpyxl>=3.1.5,<4
+reportlab>=5.0.1,<6
+matplotlib>=3.11.1,<4

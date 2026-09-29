@@ -30,6 +30,7 @@ until it merges.
 ## Component documentation
 
 - [Component README template](templates/component-readme.md) — capability, ownership, interfaces, data, configuration, lifecycle, and operations.
+- [Pipeline playbook](pipeline/README.md) — reusable CI/CD and DevSecOps templates, examples, and adoption guidance.
 
 ## Documentation boundary
 

@@ -1,0 +1,46 @@
+{
+  "node": {
+    "templates/configuration/dependabot/node.yml": ".github/dependabot.yml",
+    "templates/configuration/pre-commit/.pre-commit-config.yaml": ".pre-commit-config.yaml",
+    "templates/workflows/ci/node.yml": ".github/workflows/ci.yml",
+    "templates/workflows/security/devsecops.yml": ".github/workflows/devsecops.yml",
+    "templates/workflows/containers/scan-and-push.yml": ".github/workflows/publish.yml",
+    "templates/configuration/security/risk-policy.yaml": "security/risk-policy.yaml",
+    "templates/configuration/security/release-policy.yaml": "security/release-policy.yaml",
+    "templates/configuration/security/exceptions.yaml": "security/exceptions.yaml",
+    "tools/secreport/secreport.py": "tools/secreport/secreport.py",
+    "tools/secreport/requirements.txt": "tools/secreport/requirements.txt",
+    "tools/secreport/validate_evidence.py": "tools/secreport/validate_evidence.py"
+  },
+  "laravel": {
+    "templates/configuration/dependabot/laravel.yml": ".github/dependabot.yml",
+    "templates/configuration/pre-commit/.pre-commit-config.yaml": ".pre-commit-config.yaml",
+    "templates/workflows/ci/laravel.yml": ".github/workflows/ci.yml",
+    "templates/workflows/security/devsecops.yml": ".github/workflows/devsecops.yml",
+    "templates/workflows/containers/scan-and-push.yml": ".github/workflows/publish.yml",
+    "templates/configuration/security/risk-policy.yaml": "security/risk-policy.yaml",
+    "templates/configuration/security/release-policy.yaml": "security/release-policy.yaml",
+    "templates/configuration/security/exceptions.yaml": "security/exceptions.yaml",
+    "tools/secreport/secreport.py": "tools/secreport/secreport.py",
+    "tools/secreport/requirements.txt": "tools/secreport/requirements.txt",
+    "tools/secreport/validate_evidence.py": "tools/secreport/validate_evidence.py"
+  },
+  "django": {
+    "templates/configuration/dependabot/django.yml": ".github/dependabot.yml",
+    "templates/configuration/pre-commit/.pre-commit-config.yaml": ".pre-commit-config.yaml",
+    "templates/workflows/ci/django.yml": ".github/workflows/ci.yml",
+    "templates/workflows/security/devsecops.yml": ".github/workflows/devsecops.yml",
+    "templates/workflows/containers/scan-and-push.yml": ".github/workflows/publish.yml",
+    "templates/configuration/security/risk-policy.yaml": "security/risk-policy.yaml",
+    "templates/configuration/security/release-policy.yaml": "security/release-policy.yaml",
+    "templates/configuration/security/exceptions.yaml": "security/exceptions.yaml",
+    "tools/secreport/secreport.py": "tools/secreport/secreport.py",
+    "tools/secreport/requirements.txt": "tools/secreport/requirements.txt",
+    "tools/secreport/validate_evidence.py": "tools/secreport/validate_evidence.py"
+  },
+  "minimal-container": {
+    "templates/configuration/dependabot/minimal-container.yml": ".github/dependabot.yml",
+    "templates/configuration/pre-commit/.pre-commit-config.yaml": ".pre-commit-config.yaml",
+    "templates/workflows/containers/build-and-push.yml": ".github/workflows/publish.yml"
+  }
+}
