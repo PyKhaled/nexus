@@ -23,8 +23,7 @@ trying to become.
 ## Prerequisites
 
 - Docker and Docker Compose v2 (`docker compose version`)
-- Ruby (any recent 3.x) — only needed for Nexus Assembler under
-  `tools/nexus_assembler/` and its tests, not for running the stack itself
+- Python 3.11 or newer for Nexus Assembler and repository validation tools
 
 ## Quick start
 
@@ -44,7 +43,7 @@ file is required — every service has a working development default.
 | `http://auth.localhost` | Keycloak |
 | `http://status.localhost` | Kener (service status page) |
 | `http://overseer.localhost` | Overseer (Compose observability/control — **unauthenticated by design**, trusted-network only) |
-| `http://api.localhost` | Reserved; no runnable API service exists yet |
+| `http://api.localhost` | Reserved; the risk workflow API source exists but is not wired into Compose |
 
 Start one part of the stack instead of everything with `make website`,
 `make auth`, `make status`, `make overseer`, or `make gateway` — each starts
@@ -58,7 +57,7 @@ Assembler targets described below.
 | --- | --- |
 | `compose.yml` | The one active Compose definition. Source of truth for local development; every `make` target reads it. |
 | `makefile` | Every supported operation — stack lifecycle, gateway operations, database shells, composition tooling. Start here before running a raw `docker compose` command by hand. |
-| `system/` | One directory per deployable service or stack (`system-gateway`, `system-auth` + `system-auth-db`, `system-website` + `system-website-db`, `system-status`, `system-overseer`, and the non-runnable `system-service` scaffold). Each owns its own README, config, and `docs/runbooks/`. |
+| `system/` | Service and stack sources, including the active gateway/auth/website/status/overseer components, the non-runnable `system-service` scaffold, and the source-only risk workflow API. |
 | `composition/` + `tools/nexus_assembler/` + `bin/nexus` | Nexus Assembler turns a declarative blueprint (edition/environment/target/assurance/capabilities) into a Compose deployment package. Not wired into the default workflow — `compose.yml` stays hand-maintained and the Assembler is kept in sync with it by tests. See `composition/README.md`. |
 | `docs/` | Canonical documentation index (`docs/README.md`), architecture decisions, Compose mode reference, runbook index, and reusable templates (component README, runbook, ADR). |
 | `product-system.yaml` | The declarative product-capability model referenced above. |
@@ -125,9 +124,8 @@ Full decision record: `docs/architecture/service-and-stack-organization.md`.
 
 - [ ] `make gateway-test` if you touched anything under `system/system-gateway/`
 - [ ] `docker compose -f compose.yml config --quiet` if you touched `compose.yml`
-- [ ] `ruby tools/nexus_assembler/test/assembler_test.rb` and
-      `ruby tools/nexus_assembler/test/cli_test.rb` (or `make assembler-test`)
-      if you touched `composition/` or `tools/nexus_assembler/`
+- [ ] `make assembler-test` if you touched `composition/` or
+      `tools/nexus_assembler/`
 - [ ] New or changed service: does it have a README, a runbook index entry,
       and — if it's gateway-routed — a documented route?
 - [ ] Does anything you removed or scoped down need a note explaining why,
@@ -141,13 +139,17 @@ Full decision record: `docs/architecture/service-and-stack-organization.md`.
   for the authoritative, tested list.
 - `system-service` is a scaffold, not a runnable service — the `api.localhost`
   route is reserved but has nothing behind it.
+- `system-risk-workflow-api` contains a runnable standalone service, but it is
+  not yet declared in root Compose, the gateway runtime, or the Assembler
+  catalog. Its presence is source evidence, not deployment evidence.
 - Overseer has no built-in authentication and mounts the Docker socket; its
   default route is trusted-network-only by design, and a production
   authenticated overlay is drafted but not yet built (see
   `system/system-overseer/README.md`).
-- Nexus Assembler (`bin/nexus`) is a real, tested CLI, but it's a
-  repo-local script — not a packaged or distributable artifact — and
-  `validate` doesn't yet reassemble and rerun policy checks against assembled
+- Nexus Assembler (`bin/nexus`) is a real, tested Python CLI. Its package lives
+  under `tools/nexus_assembler/`; publishing it to a package index is not part
+  of the current workflow. The CLI `validate` doesn't yet reassemble and rerun
+  policy checks against assembled
   content. See `composition/README.md`'s "Known gaps."
 - Open work is tracked in [GitHub Issues](https://github.com/PyKhaled/Nexus/issues).
   Start with the [commit-bound evidence baseline](https://github.com/PyKhaled/Nexus/issues/17)

@@ -47,6 +47,7 @@ without preventing the gateway from starting.
 | `system/system-website/` | Optional WordPress and MySQL stack |
 | `system/system-status/` | Optional Kener status page and Redis stack |
 | `system/system-overseer/` | Optional Overseer observability and control dashboard |
+| `system/system-risk-workflow-api/` | Source-only multi-tenant risk workflow API; not yet composed or routed |
 
 ## Start the development environment
 
@@ -60,7 +61,8 @@ curl http://localhost/healthz
 
 This starts the gateway, Keycloak with PostgreSQL, WordPress with MySQL,
 Kener with Redis, and Overseer. The reference `system-service` scaffold is
-not runnable and is therefore not started by Compose.
+not runnable and is therefore not started by Compose. The risk workflow API is
+also not part of the root Compose model yet.
 
 Expected response:
 

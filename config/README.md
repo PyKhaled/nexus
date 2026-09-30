@@ -4,6 +4,48 @@ Use Make as the interface. Bash loads ordinary private files; Docker Compose
 explicitly maps values into the services that consume them. No schema service,
 Vault dependency, or additional CLI is required.
 
+## Configuration flow
+
+```mermaid
+flowchart TD
+    CONFIG[Configuration]
+
+    CONFIG --> ENV[Environment]
+    CONFIG --> SECRETS[Secrets]
+    CONFIG --> FLAGS[Feature Flags]
+
+    ENV --> CONFIG_ENV["config.env"]
+    SECRETS --> SECRET_ENV["secret.env<br/>Mounted secret files"]
+    FLAGS --> FLAG_ENV["Explicit environment mappings"]
+
+    CONFIG_ENV --> MAKE["Make + config helper"]
+    SECRET_ENV --> MAKE
+    FLAG_ENV --> MAKE
+
+    MAKE --> COMPOSE["Docker Compose<br/>Per-service mappings"]
+
+    COMPOSE --> SERVICES
+
+    subgraph SERVICES["System Services"]
+        DJANGO["Django"]
+        WORDPRESS["WordPress"]
+        MYSQL["MySQL"]
+        KEYCLOAK["Keycloak"]
+        KENER["Kener"]
+        OTHER["Other Services"]
+    end
+```
+
+Runtime configuration is treated as a shared platform concern rather than
+application-specific configuration. Environment values, secrets, and feature
+flags enter the runtime through explicit host-side sources, are loaded by the
+Make/configuration helper, and are then mapped by Docker Compose only into the
+services that consume them.
+
+Not every service receives every configuration value. Service `environment`
+mappings, secret mounts, and deployment-specific configuration define the
+boundary for each service.
+
 ## Development
 
 ```sh
@@ -24,8 +66,11 @@ defaults. If either runtime file exists, both must exist. `config-check` always
 requires both. It checks syntax and file permissions, not required credentials,
 credential validity, or production readiness. `compose-check` additionally runs
 Compose validation without printing the resolved values. Neither starts Docker
-containers. Run `make config-test` for isolated helper tests and `make config-compose-test`
-for Compose mapping and secret-isolation tests (requires Ruby and Compose).
+containers.
+
+Run `make config-test` for isolated helper tests and
+`make config-compose-test` for Compose mapping and secret-isolation tests
+(requires Python 3.11+ and Docker Compose).
 
 ## File format and precedence
 
@@ -53,20 +98,22 @@ are not rewritten. Once copied and checked, archive legacy files outside the
 checkout so omitted keys do not keep falling back to old values.
 
 Both runtime files must be regular, non-symlink files readable by the invoking
-user, with mode 600 or 640 (or stricter readable permissions). Keep secrets only in `secret.env`; this convention
-is documented rather than inferred by a schema. Shell/loader control keys
-such as PATH, HOME, BASH_ENV, and NEXUS_* are reserved. Set runtime selection
-variables outside the files.
+user, with mode 600 or 640 (or stricter readable permissions). Keep secrets only
+in `secret.env`; this convention is documented rather than inferred by a schema.
+Shell/loader control keys such as `PATH`, `HOME`, `BASH_ENV`, and `NEXUS_*` are
+reserved. Set runtime selection variables outside the files.
 
 The helper exports values only to the child process. Compose receives
 `--env-file /dev/null` to avoid an implicit `.env` lookup and a second dotenv
 interpretation. This also permits `.env/` to be a directory. Prefer Make over
-calling Compose directly when using these files. Compose does not copy the
-whole host environment into containers: service `environment` mappings select
-which keys they receive. The development-only `compose.config.yml` overlay supplies Keycloak mappings
-when Make uses the root model; generated packages keep their own authentication
-contract. Keycloak's existing service env-files are retained for
-additional component-specific settings; mapped keys take precedence.
+calling Compose directly when using these files.
+
+Compose does not copy the whole host environment into containers: service
+`environment` mappings select which keys they receive. The development-only
+`compose.config.yml` overlay supplies Keycloak mappings when Make uses the root
+model; generated packages keep their own authentication contract. Keycloak's
+existing service env-files are retained for additional component-specific
+settings; mapped keys take precedence.
 
 Use the same password for `KC_DB_PASSWORD` and `POSTGRES_PASSWORD`. WordPress
 and MySQL already consume the same `MYSQL_PASSWORD` key. Administrative MySQL
@@ -96,17 +143,20 @@ make up COMPOSE_SECRETS=compose.secrets.yml
 Pass the same overlay to subsequent lifecycle commands. The website receives
 only the application password; MySQL receives both passwords. Kener and
 Keycloak retain their explicit environment mappings; `_FILE` is image-specific,
-not a Docker-wide feature. Do not retain WordPress/MySQL passwords in `secret.env`
-when using the overlay.
+not a Docker-wide feature. Do not retain WordPress/MySQL passwords in
+`secret.env` when using the overlay.
 
 Compose mounts these host files into `/run/secrets/`; it does not encrypt their
 contents on disk. Set host ownership and permissions so the Docker daemon and
 intended container user can read the files. For remote Docker engines, the
-source paths must exist on the daemon host. Changing a password file does not
-rotate an existing database password: update the database credential and
-coordinate application restarts using the service rotation runbook.
+source paths must exist on the daemon host.
 
-See Docker's [Compose secrets documentation](https://docs.docker.com/compose/how-tos/use-secrets/).
+Changing a password file does not rotate an existing database password: update
+the database credential and coordinate application restarts using the service
+rotation runbook.
+
+See Docker's
+[Compose secrets documentation](https://docs.docker.com/compose/how-tos/use-secrets/).
 
 ## Production paths
 
@@ -143,14 +193,22 @@ Compose configuration or use shell tracing when handling real credentials.
 ## Docker containers and Swarm
 
 The helper can supply interpolation variables to another explicitly written
-Docker command, for example `bash scripts/config.sh run -- docker run --rm
---env APP_SETTING image`. Only explicitly forwarded variables enter that
-container. Docker's own `--env-file` has different parsing rules; do not assume
-it implements the literal/quoted format above.
+Docker command, for example:
+
+```sh
+bash scripts/config.sh run -- docker run --rm --env APP_SETTING image
+```
+
+Only explicitly forwarded variables enter that container. Docker's own
+`--env-file` has different parsing rules; do not assume it implements the
+literal/quoted format above.
 
 Swarm deployment is intentionally not implemented yet. A future `make deploy`
 needs a separate reviewed stack definition, versioned Swarm configs/secrets,
 per-service grants, and a rotation procedure. Do not feed `compose.secrets.yml`
 to `docker stack deploy`: Compose overlay tags and host-file secret delivery
-are not the Swarm lifecycle. See Docker's [interpolation documentation](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/)
+are not the Swarm lifecycle.
+
+See Docker's
+[interpolation documentation](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/)
 for the Compose-only `.env` behavior.

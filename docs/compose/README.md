@@ -33,8 +33,9 @@ This starts:
 - overseer.
 
 The API upstream remains reserved as `api:8000`. `system-service` is a
-repository scaffold rather than a runnable Nexus API, so it is not declared in
-`compose.yml`.
+repository scaffold, while `system-risk-workflow-api` is a standalone service
+source that has not yet been integrated into the root runtime. Neither is
+declared in `compose.yml`.
 
 ## Using an example overlay
 
