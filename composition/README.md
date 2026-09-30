@@ -1,7 +1,7 @@
 # Nexus Assembler Data
 
 This directory contains the catalog and policy data read by the **Nexus
-Assembler** ([`tools/nexus_assembler/assembler.rb`](../tools/nexus_assembler/assembler.rb)).
+Assembler** ([`tools/nexus_assembler/nexus_assembler/assembler.py`](../tools/nexus_assembler/nexus_assembler/assembler.py)).
 The Assembler turns a declarative **blueprint** into a **deployment package**;
 [`bin/nexus`](../bin/nexus) is its command line. See
 [issue #4](https://github.com/PyKhaled/Nexus/issues/4) for the historical
@@ -41,7 +41,7 @@ feature rationale. Current integrity and evolution work is indexed in the
 
 These match the services in the root [`compose.yml`](../compose.yml) exactly;
 `nexus-development.yaml` is assembled and compared against it in
-[`assembler_test.rb`](../tools/nexus_assembler/test/assembler_test.rb).
+the [Python test suite](../tools/nexus_assembler/tests/).
 
 `observability` is selected in `nexus-development.yaml` only. It is
 deliberately **absent** from `nexus-self-hosted-production.yaml` and
@@ -141,7 +141,7 @@ fragments before writing one self-contained deployment package. Operators
 should not need to remember an ordered list of post-assembly override files.
 
 Future catalog metadata should remain generic rather than branching on names
-such as `overseer` or `wordpress` in `assembler.rb`. Candidate fields include
+such as `overseer` or `wordpress` in `assembler.py`. Candidate fields include
 environment/target/assurance compatibility, component classification,
 capability dependencies and conflicts, and ephemeral/persistent state
 lifecycle. These names are proposals until the schema and tests implement
@@ -239,7 +239,7 @@ make collect-secrets
 ## Catalog schema: `production` and `secretsEnvFiles`
 
 Two catalog fields are read declaratively by the Assembler rather than being
-special-cased by capability name — this is what keeps `assembler.rb` from
+special-cased by capability name — this is what keeps `assembler.py` from
 needing to know that "website" or "keycloak" exist:
 
 - `secretsEnvFiles: [path, ...]` — repo-relative paths to this component's own
@@ -247,8 +247,8 @@ needing to know that "website" or "keycloak" exist:
   silently skipped, matching a fresh checkout before any `.env` has been
   created from its `.env.example`.
 - `production:` — what this component needs when `deployment.environment` is
-  `production`, applied generically by `prepare_production_mounts!` /
-  `prepare_production_gateway!` / `copy_production_assets`:
+  `production`, applied generically by `_prepare_production_mounts` /
+  `_prepare_production_gateway` / `_copy_production_assets`:
   - `assetCopies: [{source, destination}]` — directories copied into the
     deployment package's `assets/`.
   - `volumeRewrites: [{service, matchPrefix, replacement}]` or
@@ -322,6 +322,5 @@ external secrets, backup, and audit handled outside Compose).
 ## Running the tests
 
 ```sh
-ruby tools/nexus_assembler/test/assembler_test.rb
-ruby tools/nexus_assembler/test/cli_test.rb
+make assembler-test
 ```

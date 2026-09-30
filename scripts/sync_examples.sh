@@ -27,7 +27,6 @@ while (($#)); do
   esac
 done
 
-# Matches Path(__file__).resolve().parents[1] from scripts/sync_examples.py.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 root=$(cd "$script_dir/.." && pwd)
 manifest="$root/examples/manifest.json"

@@ -5,6 +5,7 @@ SECRETS_ENV ?= secrets.env
 ENV ?= development
 COMPOSE_FILE ?= compose.yml
 COMPOSE_SECRETS ?=
+NEXUS_PYTHON ?= $(shell command -v python3.13 || command -v python3.12 || command -v python3.11 || command -v python3)
 export NEXUS_ENV = $(ENV)
 export NEXUS_CONFIG_DIR
 export SECRETS_ENV
@@ -89,7 +90,7 @@ config-check:
 	@$(CONFIG) check
 
 config-test:
-	@bash scripts/tests/config_test.sh
+	@$(NEXUS_PYTHON) scripts/tests/test_config.py
 
 # The root model is development-only; ENV selects files, not deployment policy.
 compose-ready:
@@ -100,7 +101,7 @@ compose-ready:
 up down build rebuild ps logs gateway-up gateway-test gateway-config gateway-reload auth website status overseer auth-dbshell website-dbshell clean compose-check: compose-ready
 
 config-compose-test:
-	@ruby scripts/tests/compose_config_test.rb
+	@$(NEXUS_PYTHON) scripts/tests/test_compose_config.py
 
 compose-check:
 	@$(DC) config --quiet
@@ -182,9 +183,7 @@ deployment-validate:
 	bin/nexus validate $(DEPLOYMENT_PACKAGE)
 
 assembler-test:
-	ruby tools/nexus_assembler/test/assembler_test.rb
-	ruby tools/nexus_assembler/test/cli_test.rb
-	ruby tools/nexus_assembler/test/repository_manager_test.rb
+	@PYTHONPATH=tools/nexus_assembler $(NEXUS_PYTHON) -m unittest discover -s tools/nexus_assembler/tests -v
 
 ##########################################
 # Database

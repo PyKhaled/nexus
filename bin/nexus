@@ -1,6 +1,24 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
-require_relative "../tools/nexus_assembler/cli"
+root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 
-exit NexusAssembler::CLI.new(ARGV, program_name: "nexus").run
+if [[ -n ${NEXUS_PYTHON:-} ]]; then
+  python=$NEXUS_PYTHON
+else
+  for candidate in python3.13 python3.12 python3.11 python3; do
+    if command -v "$candidate" >/dev/null 2>&1 \
+      && "$candidate" -c 'import sys; raise SystemExit(sys.version_info < (3, 11))'; then
+      python=$candidate
+      break
+    fi
+  done
+fi
+
+[[ -n ${python:-} ]] || {
+  printf 'error: Nexus Assembler requires Python 3.11 or newer\n' >&2
+  exit 1
+}
+
+export PYTHONPATH="$root/tools/nexus_assembler${PYTHONPATH:+:$PYTHONPATH}"
+exec "$python" -m nexus_assembler "$@"

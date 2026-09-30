@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=70", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nexus-assembler"
+version = "0.5.0"
+description = "Python port of the Nexus Assembler CLI and composition engine"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{name = "Ahmed Khaled"}]
+dependencies = ["PyYAML>=6.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+nexus = "nexus_assembler.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["nexus_assembler*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
