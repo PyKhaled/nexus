@@ -1,0 +1,220 @@
+{
+  "info": {
+    "name": "Risk Workflow API",
+    "description": "Multi-tenant risk workflow backend. All /api requests require **x-tenant** header. Auth endpoints use **Authorization: Bearer {{token}}** after login. Compliance-only: assign, request-changes, decision, archive.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000" },
+    { "key": "tenant", "value": "tenant-1" },
+    { "key": "token", "value": "" },
+    { "key": "riskId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.token) pm.collectionVariables.set('token', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-tenant", "value": "{{tenant}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"yourpassword\"\n}"
+            },
+            "url": "{{base_url}}/api/auth/login",
+            "description": "Returns JWT. Token is auto-saved to collection variable `token` for subsequent requests."
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "x-tenant", "value": "{{tenant}}" }
+            ],
+            "url": "{{base_url}}/api/auth/me",
+            "description": "Current user (id, email, role). Requires valid token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant", "value": "{{tenant}}" }
+            ],
+            "url": "{{base_url}}/api/health",
+            "description": "Returns { ok: true }. Requires x-tenant."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Risks",
+      "item": [
+        {
+          "name": "Create Risk",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json._id) pm.collectionVariables.set('riskId', json._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "x-tenant", "value": "{{tenant}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Sample risk title\",\n  \"description\": \"Optional description\"\n}"
+            },
+            "url": "{{base_url}}/api/risks",
+            "description": "Creates a risk in draft. riskId is auto-saved for workflow requests."
+          }
+        },
+        {
+          "name": "List Risks",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "x-tenant", "value": "{{tenant}}" }
+            ],
+            "url": "{{base_url}}/api/risks",
+            "description": "List all risks for the current tenant."
+          }
+        },
+        {
+          "name": "Submit Risk",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "x-tenant", "value": "{{tenant}}" }
+            ],
+            "url": "{{base_url}}/api/risks/{{riskId}}/submit",
+            "description": "Transition draft → submitted. Any authenticated user."
+          }
+        },
+        {
+          "name": "Resubmit Risk",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "x-tenant", "value": "{{tenant}}" }
+            ],
+            "url": "{{base_url}}/api/risks/{{riskId}}/resubmit",
+            "description": "Transition changes_requested → submitted. Any authenticated user."
+          }
+        },
+        {
+          "name": "Assign Risk (Compliance)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "x-tenant", "value": "{{tenant}}" }
+            ],
+            "url": "{{base_url}}/api/risks/{{riskId}}/assign",
+            "description": "Transition submitted → in_review, assignee = current user. **Compliance role only.**"
+          }
+        },
+        {
+          "name": "Request Changes (Compliance)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "x-tenant", "value": "{{tenant}}" }
+            ],
+            "url": "{{base_url}}/api/risks/{{riskId}}/request-changes",
+            "description": "Transition in_review → changes_requested. **Compliance role only.**"
+          }
+        },
+        {
+          "name": "Decision - Approve (Compliance)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "x-tenant", "value": "{{tenant}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\"\n}"
+            },
+            "url": "{{base_url}}/api/risks/{{riskId}}/decision",
+            "description": "Transition in_review → approved. **Compliance role only.**"
+          }
+        },
+        {
+          "name": "Decision - Reject (Compliance)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "x-tenant", "value": "{{tenant}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"reject\"\n}"
+            },
+            "url": "{{base_url}}/api/risks/{{riskId}}/decision",
+            "description": "Transition in_review → rejected. **Compliance role only.**"
+          }
+        },
+        {
+          "name": "Archive Risk (Compliance)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "x-tenant", "value": "{{tenant}}" }
+            ],
+            "url": "{{base_url}}/api/risks/{{riskId}}/archive",
+            "description": "Transition approved/rejected → archived. **Compliance role only.**"
+          }
+        }
+      ]
+    }
+  ]
+}
